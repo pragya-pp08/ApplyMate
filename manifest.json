@@ -1,0 +1,17 @@
+{
+  "manifest_version": 3,
+  "name": "ApplyMate — Personal Application Agent",
+  "description": "Fill repetitive application forms from a private profile and review every answer before submitting.",
+  "version": "0.1.0",
+  "permissions": ["activeTab", "storage", "tabs", "scripting"],
+  "optional_host_permissions": ["http://*/*", "https://*/*"],
+  "action": {
+    "default_title": "ApplyMate",
+    "default_popup": "popup.html"
+  },
+  "background": {
+    "service_worker": "background.js",
+    "type": "module"
+  },
+  "options_page": "options.html"
+}

@@ -1,0 +1,24 @@
+#applymate-root, #applymate-root * { box-sizing: border-box; }
+#applymate-root { position: fixed; inset: 0; z-index: 2147483647; display: grid; place-items: center; padding: 24px; background: rgba(15, 24, 19, .58); backdrop-filter: blur(5px); font-family: Inter, ui-sans-serif, system-ui, sans-serif; color: #17211b; }
+#applymate-root .am-dialog { width: min(620px, 100%); max-height: min(760px, 92vh); overflow: auto; padding: 28px; background: #f8f6ef; border-radius: 21px; box-shadow: 0 28px 90px #08120c66; }
+#applymate-root .am-top { display: flex; justify-content: space-between; align-items: start; gap: 20px; }
+#applymate-root .am-kicker { color: #176b46; font-size: 10px; font-weight: 800; letter-spacing: .14em; }
+#applymate-root h2 { margin: 7px 0 5px; color: #17211b; font: 600 27px/1.15 Georgia, serif; }
+#applymate-root .am-sub { margin: 0; color: #667169; font-size: 12px; }
+#applymate-root .am-close { border: 0; border-radius: 99px; padding: 7px 11px; color: #536158; background: #e8ebe5; cursor: pointer; }
+#applymate-root .am-warning { margin: 20px 0 14px; padding: 12px 14px; color: #674e21; background: #f3e8ca; border-radius: 10px; font-size: 12px; line-height: 1.45; }
+#applymate-root .am-list { display: grid; gap: 8px; margin: 16px 0; }
+#applymate-root .am-row { display: grid; grid-template-columns: minmax(130px, .8fr) 1.2fr auto; gap: 12px; align-items: center; padding: 11px 12px; background: white; border: 1px solid #e0e4de; border-radius: 11px; font-size: 12px; }
+#applymate-root .am-label { color: #657068; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+#applymate-root .am-value { color: #1f2d24; font-weight: 650; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+#applymate-root .am-badge { padding: 4px 7px; color: #1d6a47; background: #e2f0e6; border-radius: 99px; font-size: 9px; font-weight: 800; }
+#applymate-root .am-empty { padding: 18px; color: #6d766f; text-align: center; border: 1px dashed #cbd1ca; border-radius: 11px; font-size: 12px; }
+#applymate-root .am-check { display: flex; gap: 10px; align-items: flex-start; margin: 18px 0; padding: 14px; color: #314138; background: #edf1eb; border-radius: 11px; font-size: 12px; line-height: 1.45; }
+#applymate-root .am-check input { width: 17px; height: 17px; flex: 0 0 auto; accent-color: #176b46; }
+#applymate-root .am-actions { display: flex; justify-content: flex-end; gap: 10px; margin-top: 18px; }
+#applymate-root button { font-family: inherit; }
+#applymate-root .am-secondary, #applymate-root .am-primary { border-radius: 11px; padding: 11px 15px; font-weight: 750; cursor: pointer; }
+#applymate-root .am-secondary { border: 1px solid #cbd3cc; color: #385044; background: transparent; }
+#applymate-root .am-primary { border: 0; color: white; background: #176b46; }
+#applymate-root .am-primary:disabled { opacity: .42; cursor: not-allowed; }
+.applymate-filled { outline: 2px solid #3f9a6c !important; outline-offset: 2px !important; }

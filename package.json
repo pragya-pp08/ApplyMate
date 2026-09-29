@@ -1,0 +1,20 @@
+{
+  "name": "applymate",
+  "version": "0.2.0",
+  "private": true,
+  "type": "module",
+  "description": "A human-in-the-loop personal application agent.",
+  "engines": {
+    "node": ">=24"
+  },
+  "scripts": {
+    "dev": "node --watch server/index.js",
+    "start": "node server/index.js",
+    "test": "node --test",
+    "check": "node --check server/index.js && node --check server/db.js && node --check server/security.js && node --check server/google.js && node --check server/resume.js && node --check public/app.js && node --check background.js && node --check options.js && node --check content.js"
+  },
+  "dependencies": {
+    "mammoth": "^1.10.0",
+    "pdfjs-dist": "^6.3.289"
+  }
+}

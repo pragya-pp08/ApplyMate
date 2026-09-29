@@ -1,0 +1,134 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="description" content="ApplyMate — your private, human-in-the-loop application agent." />
+    <title>ApplyMate</title>
+    <link rel="stylesheet" href="/styles.css?v=10" />
+  </head>
+  <body>
+    <div id="authView" class="auth-shell">
+      <section class="auth-story">
+        <a class="wordmark" href="/"><span>A</span> ApplyMate</a>
+        <div class="hero-copy">
+          <p class="kicker">APPLYMATE</p>
+          <h1>Spend less time filling forms.</h1>
+          <p>Save your details once, reuse them on application forms, and review everything before you submit.</p>
+          <div class="trust-row"><span>Private profile</span><span>You review every answer</span><span>You control submission</span></div>
+        </div>
+        <p class="legal-note">ApplyMate assists with preparation. You always control submission. <a href="/privacy.html">Privacy</a> · <a href="/terms.html">Terms</a></p>
+      </section>
+      <section class="auth-panel">
+        <div class="auth-card">
+          <a class="wordmark auth-wordmark" href="/"><span>A</span> ApplyMate</a>
+          <h2 id="authTitle">Welcome back</h2>
+          <p id="authSubtitle">Sign in to continue.</p>
+          <form id="authForm">
+            <label id="nameField" hidden>Your name<input name="name" autocomplete="name" /></label>
+            <label>Email<input name="email" type="email" autocomplete="email" required /></label>
+            <label>Password<input name="password" type="password" autocomplete="current-password" minlength="10" required /></label>
+            <button class="button primary" type="submit">Sign in</button>
+          </form>
+          <p id="authError" class="error" role="alert"></p>
+          <button id="authToggle" class="text-button">New here? Create an account</button>
+          <p class="auth-legal"><a href="/privacy.html">Privacy</a><span>·</span><a href="/terms.html">Terms</a></p>
+        </div>
+      </section>
+    </div>
+
+    <div id="appView" class="app-shell" hidden>
+      <aside class="sidebar">
+        <a class="wordmark" href="#inbox"><span>A</span> ApplyMate</a>
+        <nav>
+          <button class="nav-item active" data-view="inbox"><i></i>Applications</button>
+          <button class="nav-item" data-view="profile"><i></i>Profile</button>
+          <button class="nav-item" data-view="connections"><i></i>Connections</button>
+          <button class="nav-item" data-view="safety"><i></i>Privacy & activity</button>
+        </nav>
+        <div class="agent-state"><span class="pulse"></span><div><strong>Extension ready</strong><small>Forms require your approval</small></div></div>
+        <div class="user-row"><div id="avatar">A</div><div><strong id="userName"></strong><small id="userEmail"></small></div><button id="logoutButton" title="Sign out">↪</button></div>
+      </aside>
+
+      <main class="workspace">
+        <section id="inboxView" class="view">
+          <header class="page-header"><div><p class="kicker">OVERVIEW</p><h1>Applications</h1><p class="header-note">Track forms you want to complete and applications you have sent.</p></div><button id="newApplicationButton" class="button primary">Add application</button></header>
+          <div class="metrics">
+            <article><span>TO DO</span><strong id="openMetric">0</strong><small>applications</small></article>
+            <article><span>READY</span><strong id="readyMetric">0</strong><small>for your review</small></article>
+            <article><span>APPLIED</span><strong id="appliedMetric">0</strong><small>submitted</small></article>
+            <article class="safety-metric"><span>SUBMISSION</span><strong>Manual</strong><small>always confirmed by you</small></article>
+          </div>
+          <div class="toolbar"><div class="filter-group"><button class="filter active" data-filter="all">All</button><button class="filter" data-filter="new">New</button><button class="filter" data-filter="ready">Ready</button><button class="filter" data-filter="applied">Applied</button></div><input id="searchInput" type="search" placeholder="Search company or role" /></div>
+          <div id="applicationList" class="application-list"></div>
+          <div id="emptyState" class="empty-state"><div class="empty-icon">＋</div><h2>No applications yet</h2><p>Add a form link from email, LinkedIn, WhatsApp, or your placement office.</p><button class="button secondary" id="emptyAddButton">Add an application</button></div>
+        </section>
+
+        <section id="profileView" class="view" hidden>
+          <header class="page-header"><div><p class="kicker">SAVED DETAILS</p><h1>Your profile</h1><p class="header-note">These details are used only when you ask ApplyMate to fill a form.</p></div><button form="profileForm" class="button primary" type="submit">Save profile</button></header>
+          <p class="page-intro"><span class="required-star" aria-hidden="true">*</span> All profile details are required. Blank fields are never guessed, and you will confirm everything before it is saved.</p>
+          <section class="resume-import" id="resumeImport">
+            <div class="resume-copy"><span class="resume-symbol">↥</span><div><h2>Fill from your CV</h2><p>Upload a PDF, DOCX, or TXT resume. ApplyMate will suggest details for empty fields and let you review them before saving.</p></div></div>
+            <label class="resume-drop" id="resumeDrop" for="resumeFileInput">
+              <input id="resumeFileInput" type="file" accept=".pdf,.docx,.txt,application/pdf,application/vnd.openxmlformats-officedocument.wordprocessingml.document,text/plain" hidden />
+              <strong>Choose your CV</strong><span>or drag it here · maximum 8 MB</span>
+            </label>
+            <div id="resumeProgress" class="resume-progress" hidden><span></span><p>Reading your CV…</p></div>
+            <div id="resumeResult" class="resume-result" hidden><div><strong id="resumeResultTitle"></strong><p id="resumeResultText"></p></div><div id="resumeFieldList" class="resume-fields"></div></div>
+          </section>
+          <form id="profileForm" class="profile-form">
+            <fieldset><legend>Identity and contact</legend><div class="field-grid">
+              <label>First name <span class="required-star" aria-hidden="true">*</span><input name="firstName" autocomplete="given-name" required /></label><label>Last name <span class="required-star" aria-hidden="true">*</span><input name="lastName" autocomplete="family-name" required /></label>
+              <label class="wide">Full name <span class="required-star" aria-hidden="true">*</span><input name="fullName" autocomplete="name" required /></label><label>Email <span class="required-star" aria-hidden="true">*</span><input name="email" type="email" autocomplete="email" required /></label><label>Phone <span class="required-star" aria-hidden="true">*</span><input name="phone" autocomplete="tel" required /></label>
+              <label>City <span class="required-star" aria-hidden="true">*</span><input name="city" required /></label><label>State <span class="required-star" aria-hidden="true">*</span><input name="state" required /></label><label>Country <span class="required-star" aria-hidden="true">*</span><input name="country" required /></label><label>Postal code <span class="required-star" aria-hidden="true">*</span><input name="postalCode" required /></label>
+            </div></fieldset>
+            <fieldset><legend>Education</legend><div class="field-grid">
+              <label class="wide">College or university <span class="required-star" aria-hidden="true">*</span><input name="college" required /></label><label class="wide">College address <span class="required-star" aria-hidden="true">*</span><input name="collegeAddress" autocomplete="street-address" required /></label>
+              <label>College city <span class="required-star" aria-hidden="true">*</span><input name="collegeCity" required /></label><label>College state <span class="required-star" aria-hidden="true">*</span><input name="collegeState" required /></label><label>College country <span class="required-star" aria-hidden="true">*</span><input name="collegeCountry" required /></label>
+              <label>Degree <span class="required-star" aria-hidden="true">*</span><input name="degree" required /></label><label>Field of study <span class="required-star" aria-hidden="true">*</span><input name="fieldOfStudy" required /></label>
+              <label>Graduation year <span class="required-star" aria-hidden="true">*</span><input name="graduationYear" required /></label><label>CGPA / GPA <span class="required-star" aria-hidden="true">*</span><input name="gpa" required /></label><label>10th percentage <span class="required-star" aria-hidden="true">*</span><input name="tenthPercentage" required /></label><label>12th percentage <span class="required-star" aria-hidden="true">*</span><input name="twelfthPercentage" required /></label>
+            </div></fieldset>
+            <fieldset><legend>Career and links</legend><div class="field-grid">
+              <label>Current company <span class="required-star" aria-hidden="true">*</span><input name="currentCompany" required /></label><label>Current title <span class="required-star" aria-hidden="true">*</span><input name="currentTitle" required /></label><label>Experience <span class="required-star" aria-hidden="true">*</span><input name="yearsExperience" required /></label><label>Notice period <span class="required-star" aria-hidden="true">*</span><input name="noticePeriod" required /></label>
+              <label>Expected salary <span class="required-star" aria-hidden="true">*</span><input name="expectedSalary" required /></label><label class="wide">Skills <span class="required-star" aria-hidden="true">*</span><input name="skills" required /></label><label class="wide">LinkedIn URL <span class="required-star" aria-hidden="true">*</span><input name="linkedin" type="url" required /></label><label class="wide">GitHub URL <span class="required-star" aria-hidden="true">*</span><input name="github" type="url" required /></label><label class="wide">Portfolio URL <span class="required-star" aria-hidden="true">*</span><input name="portfolio" type="url" required /></label>
+            </div></fieldset>
+          </form>
+        </section>
+
+        <section id="connectionsView" class="view" hidden>
+          <header class="page-header"><div><p class="kicker">SETUP</p><h1>Connections</h1><p class="header-note">Choose where ApplyMate can receive application links.</p></div></header>
+          <div class="connection-grid">
+            <article><span class="connection-icon gmail">M</span><div><h2>Gmail</h2><p id="gmailDescription">Import likely application links using official read-only OAuth.</p><div class="connection-actions"><button id="connectGmailButton" class="button secondary">Connect Gmail</button><button id="scanGmailButton" class="button primary" hidden>Scan recent email</button><button id="disconnectGmailButton" class="text-button danger" hidden>Disconnect</button></div></div><span id="gmailState" class="coming">CHECKING</span></article>
+            <article><span class="connection-icon outlook">O</span><div><h2>Outlook</h2><p>Scan selected placement and opportunity mail through Microsoft OAuth.</p></div><span class="coming">PLANNED</span></article>
+            <article><span class="connection-icon linkedin">in</span><div><h2>LinkedIn</h2><p>Use shared links and notification email; no unauthorized scraping.</p></div><span class="coming">SHARE LINK</span></article>
+            <article><span class="connection-icon whatsapp">W</span><div><h2>WhatsApp</h2><p>Forward or share a link to ApplyMate without scraping your chats.</p></div><span class="coming">SHARE LINK</span></article>
+            <article class="pair-card"><span class="connection-icon extension">A</span><div><h2>Chrome extension</h2><p>Create a revocable device token, then paste it into the extension profile page.</p><button id="pairExtensionButton" class="button secondary">Create pairing token</button><div id="pairTokenBox" hidden><code id="pairToken"></code><button id="copyTokenButton" class="text-button">Copy token</button></div></div><span class="coming">AVAILABLE</span></article>
+          </div>
+        </section>
+
+        <section id="safetyView" class="view" hidden>
+          <header class="page-header"><div><p class="kicker">ACCOUNT</p><h1>Privacy & activity</h1><p class="header-note">Review how your data is protected and what ApplyMate has done.</p></div></header>
+          <div class="safety-grid">
+            <article><span>01</span><h2>Encrypted profile</h2><p>Your reusable profile is encrypted with AES-256-GCM before being written to the database.</p></article>
+            <article><span>02</span><h2>No silent submission</h2><p>The extension blocks its first submit attempt and asks you to review assisted answers.</p></article>
+            <article><span>03</span><h2>Human CAPTCHA</h2><p>ApplyMate never solves or bypasses CAPTCHA. You complete the challenge yourself.</p></article>
+            <article><span>04</span><h2>No invented facts</h2><p>Empty or uncertain answers stay empty and are shown as questions requiring you.</p></article>
+          </div>
+          <section class="audit-section"><div><p class="kicker">AUDIT TRAIL</p><h2>Recent agent activity</h2></div><div id="auditList" class="audit-list"></div></section>
+          <section class="account-section"><div><p class="kicker">YOUR DATA</p><h2>Export or remove your account</h2><p>Download a readable copy of your profile, applications, and audit events, or permanently delete everything stored for this account.</p></div><div><button id="exportAccountButton" class="button secondary">Export my data</button><button id="deleteAccountButton" class="button danger-button">Delete account</button></div></section>
+        </section>
+      </main>
+    </div>
+
+    <dialog id="applicationDialog">
+      <form id="applicationForm" method="dialog">
+        <div class="dialog-head"><div><p class="kicker">NEW OPPORTUNITY</p><h2>Add an application</h2></div><button type="button" id="closeDialog" aria-label="Close">✕</button></div>
+        <div class="field-grid"><label>Company<input name="company" required /></label><label>Role<input name="role" required /></label><label>Source<select name="source"><option value="manual">Manual</option><option value="email">Email</option><option value="linkedin">LinkedIn</option><option value="whatsapp">WhatsApp</option><option value="placement">Placement office</option><option value="other">Other</option></select></label><label>Deadline<input name="deadline" type="date" /></label><label class="wide">Application URL<input name="url" type="url" placeholder="https://…" /></label><label class="wide">Notes<textarea name="notes" rows="4"></textarea></label></div>
+        <p id="dialogError" class="error"></p><div class="dialog-actions"><button class="button secondary" type="button" id="cancelDialog">Cancel</button><button class="button primary" type="submit">Save to inbox</button></div>
+      </form>
+    </dialog>
+
+    <div id="toast" role="status"></div>
+    <script src="/app.js?v=10"></script>
+  </body>
+</html>

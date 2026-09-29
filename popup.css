@@ -1,0 +1,31 @@
+:root {
+  color-scheme: light;
+  font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  color: #17211b;
+  background: #f5f3ec;
+}
+
+* { box-sizing: border-box; }
+body { margin: 0; width: 370px; min-height: 470px; background: radial-gradient(circle at 100% 0, #dcebd9 0, transparent 40%), #f5f3ec; }
+main { padding: 22px; }
+header { display: grid; grid-template-columns: 42px 1fr auto; gap: 11px; align-items: center; margin-bottom: 22px; }
+.mark { width: 42px; height: 42px; display: grid; place-items: center; color: white; background: #176b46; border-radius: 13px; font: 800 22px/1 Georgia, serif; box-shadow: 0 6px 18px #176b4630; }
+h1 { margin: 0; font-size: 18px; letter-spacing: -.03em; }
+header p { margin: 3px 0 0; color: #667269; font-size: 11px; }
+.local { color: #176b46; background: #deeee3; border-radius: 99px; padding: 5px 8px; font-size: 9px; font-weight: 800; letter-spacing: .08em; }
+.card { min-height: 180px; padding: 20px; background: rgba(255,255,255,.75); border: 1px solid #dbe0d9; border-radius: 18px; box-shadow: 0 12px 30px #203b2a12; }
+.eyebrow { color: #778079; font-size: 10px; font-weight: 800; letter-spacing: .12em; }
+h2 { margin: 14px 0 7px; font: 600 22px/1.2 Georgia, serif; }
+#pageHost { margin: 0; color: #6a746d; font-size: 12px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.stats { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 20px; }
+.stats div { padding: 12px; background: #f3f6f1; border-radius: 12px; }
+.stats strong { display: block; font-size: 20px; }
+.stats span { color: #6a746d; font-size: 11px; }
+button { font: inherit; cursor: pointer; }
+.primary, .secondary { width: 100%; border-radius: 13px; padding: 13px 15px; margin-top: 12px; font-weight: 750; }
+.primary { display: flex; justify-content: space-between; border: 0; color: white; background: #176b46; box-shadow: 0 7px 18px #176b4630; }
+.secondary { color: #294237; background: transparent; border: 1px solid #cbd5ce; }
+button:disabled { cursor: not-allowed; opacity: .45; box-shadow: none; }
+#status { min-height: 18px; margin: 12px 2px 0; color: #59655e; font-size: 11px; }
+footer { display: flex; justify-content: space-between; align-items: center; gap: 12px; margin-top: 17px; font-size: 10px; color: #7b837d; }
+footer button { border: 0; padding: 0; background: transparent; color: #176b46; font-weight: 750; }

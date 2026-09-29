@@ -1,0 +1,17 @@
+services:
+  applymate:
+    build: .
+    ports:
+      - "8787:8787"
+    environment:
+      NODE_ENV: production
+      PORT: 8787
+      APP_ORIGIN: http://localhost:8787
+      DATABASE_PATH: /data/applymate.sqlite
+      APP_ENCRYPTION_KEY: ${APP_ENCRYPTION_KEY}
+      SESSION_DAYS: 14
+    volumes:
+      - applymate_data:/data
+    restart: unless-stopped
+volumes:
+  applymate_data:

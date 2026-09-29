@@ -1,0 +1,44 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>ApplyMate</title>
+    <link rel="stylesheet" href="popup.css" />
+  </head>
+  <body>
+    <main>
+      <header>
+        <div class="mark">A</div>
+        <div>
+          <h1>ApplyMate</h1>
+          <p>Your private application copilot</p>
+        </div>
+        <span class="local">LOCAL</span>
+      </header>
+
+      <section id="pageCard" class="card">
+        <span class="eyebrow">CURRENT PAGE</span>
+        <h2 id="pageTitle">Checking this page…</h2>
+        <p id="pageHost"></p>
+        <div id="scanStats" class="stats" hidden>
+          <div><strong id="knownCount">0</strong><span>ready</span></div>
+          <div><strong id="unknownCount">0</strong><span>need you</span></div>
+        </div>
+      </section>
+
+      <button id="fillButton" class="primary" disabled>
+        <span>Fill this form</span><span aria-hidden="true">→</span>
+      </button>
+      <button id="reviewButton" class="secondary" disabled>Review before submitting</button>
+
+      <p id="status" role="status"></p>
+
+      <footer>
+        <button id="profileButton">Edit my profile</button>
+        <span>Nothing is submitted without you</span>
+      </footer>
+    </main>
+    <script src="popup.js"></script>
+  </body>
+</html>
