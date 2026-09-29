@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <meta name="description" content="ApplyMate — your private, human-in-the-loop application agent." />
     <title>ApplyMate</title>
-    <link rel="stylesheet" href="/styles.css?v=10" />
+    <link rel="stylesheet" href="/styles.css?v=11" />
   </head>
   <body>
     <div id="authView" class="auth-shell">
@@ -88,9 +88,12 @@
               <label>Degree <span class="required-star" aria-hidden="true">*</span><input name="degree" required /></label><label>Field of study <span class="required-star" aria-hidden="true">*</span><input name="fieldOfStudy" required /></label>
               <label>Graduation year <span class="required-star" aria-hidden="true">*</span><input name="graduationYear" required /></label><label>CGPA / GPA <span class="required-star" aria-hidden="true">*</span><input name="gpa" required /></label><label>10th percentage <span class="required-star" aria-hidden="true">*</span><input name="tenthPercentage" required /></label><label>12th percentage <span class="required-star" aria-hidden="true">*</span><input name="twelfthPercentage" required /></label>
             </div></fieldset>
-            <fieldset><legend>Career and links</legend><div class="field-grid">
-              <label>Current company <span class="required-star" aria-hidden="true">*</span><input name="currentCompany" required /></label><label>Current title <span class="required-star" aria-hidden="true">*</span><input name="currentTitle" required /></label><label>Experience <span class="required-star" aria-hidden="true">*</span><input name="yearsExperience" required /></label><label>Notice period <span class="required-star" aria-hidden="true">*</span><input name="noticePeriod" required /></label>
-              <label>Expected salary <span class="required-star" aria-hidden="true">*</span><input name="expectedSalary" required /></label><label class="wide">Skills <span class="required-star" aria-hidden="true">*</span><input name="skills" required /></label><label class="wide">LinkedIn URL <span class="required-star" aria-hidden="true">*</span><input name="linkedin" type="url" required /></label><label class="wide">GitHub URL <span class="required-star" aria-hidden="true">*</span><input name="github" type="url" required /></label><label class="wide">Portfolio URL <span class="required-star" aria-hidden="true">*</span><input name="portfolio" type="url" required /></label>
+            <fieldset><legend>Experience</legend><div class="field-grid">
+              <label>Company name <span class="required-star" aria-hidden="true">*</span><input name="companyName" required /></label><label>Company role <span class="required-star" aria-hidden="true">*</span><input name="companyRole" required /></label>
+              <label>Currently working? <span class="required-star" aria-hidden="true">*</span><select name="currentlyWorking" required><option value="">Select an option</option><option value="yes">Yes</option><option value="no">No</option></select></label><label>Duration <span class="required-star" aria-hidden="true">*</span><input name="employmentDuration" placeholder="Example: June 2024 – Present" required /></label>
+            </div></fieldset>
+            <fieldset><legend>Skills and links</legend><div class="field-grid">
+              <label class="wide">Skills <span class="required-star" aria-hidden="true">*</span><input name="skills" required /></label><label class="wide">LinkedIn URL <span class="required-star" aria-hidden="true">*</span><input name="linkedin" type="url" required /></label><label class="wide">GitHub URL <span class="required-star" aria-hidden="true">*</span><input name="github" type="url" required /></label><label class="wide">Portfolio URL <span class="required-star" aria-hidden="true">*</span><input name="portfolio" type="url" required /></label>
             </div></fieldset>
           </form>
         </section>
@@ -129,6 +132,6 @@
     </dialog>
 
     <div id="toast" role="status"></div>
-    <script src="/app.js?v=10"></script>
+    <script src="/app.js?v=11"></script>
   </body>
 </html>

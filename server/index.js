@@ -197,6 +197,7 @@ async function api(req, res, url) {
     const profile = sanitizeProfile(body.profile);
     const missingFields = PROFILE_FIELDS.filter((field) => !profile[field]);
     if (missingFields.length) return json(res, 400, { error: "Complete all required profile fields before saving.", missingFields });
+    if (!["yes", "no"].includes(profile.currentlyWorking)) return json(res, 400, { error: "Choose whether you are currently working." });
     const encrypted = encryptJson(profile, key);
     db.prepare(`INSERT INTO profiles (user_id, encrypted_data, updated_at) VALUES (?, ?, CURRENT_TIMESTAMP)
       ON CONFLICT(user_id) DO UPDATE SET encrypted_data = excluded.encrypted_data, updated_at = CURRENT_TIMESTAMP`).run(user.id, encrypted);
@@ -353,7 +354,7 @@ async function readBuffer(req, maxBytes) {
   return Buffer.concat(chunks);
 }
 
-const PROFILE_FIELDS = ["firstName","lastName","fullName","email","phone","city","state","country","postalCode","college","collegeAddress","collegeCity","collegeState","collegeCountry","degree","fieldOfStudy","graduationYear","gpa","tenthPercentage","twelfthPercentage","currentCompany","currentTitle","yearsExperience","noticePeriod","expectedSalary","skills","linkedin","github","portfolio"];
+const PROFILE_FIELDS = ["firstName","lastName","fullName","email","phone","city","state","country","postalCode","college","collegeAddress","collegeCity","collegeState","collegeCountry","degree","fieldOfStudy","graduationYear","gpa","tenthPercentage","twelfthPercentage","companyName","companyRole","currentlyWorking","employmentDuration","skills","linkedin","github","portfolio"];
 
 function sanitizeProfile(value) {
   if (!value || typeof value !== "object" || Array.isArray(value)) return {};

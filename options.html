@@ -60,20 +60,19 @@
         </section>
 
         <section id="career">
-          <h2>Career details</h2>
+          <h2>Experience</h2>
           <div class="grid">
-            <label>Current company<input name="currentCompany" /></label>
-            <label>Current title<input name="currentTitle" /></label>
-            <label>Years of experience<input name="yearsExperience" inputmode="decimal" /></label>
-            <label>Notice period<input name="noticePeriod" /></label>
-            <label>Expected salary<input name="expectedSalary" /></label>
-            <label class="wide">Skills<input name="skills" placeholder="JavaScript, Python, SQL" /></label>
+            <label>Company name<input name="companyName" /></label>
+            <label>Company role<input name="companyRole" /></label>
+            <label>Currently working?<select name="currentlyWorking"><option value="">Select an option</option><option value="yes">Yes</option><option value="no">No</option></select></label>
+            <label>Duration<input name="employmentDuration" placeholder="June 2024 – Present" /></label>
           </div>
         </section>
 
         <section id="links">
-          <h2>Links</h2>
+          <h2>Skills and links</h2>
           <div class="grid">
+            <label class="wide">Skills<input name="skills" placeholder="JavaScript, Python, SQL" /></label>
             <label class="wide">LinkedIn URL<input name="linkedin" type="url" /></label>
             <label class="wide">GitHub URL<input name="github" type="url" /></label>
             <label class="wide">Portfolio URL<input name="portfolio" type="url" /></label>
