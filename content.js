@@ -36,7 +36,10 @@
   const sensitive = /password|passcode|otp|one.?time|captcha|verification|credit|debit|card number|cvv|bank|aadhaar|aadhar|pan number|social security|signature|gender|race|ethnic|disability|veteran|religion|consent|terms|agree/i;
   let filledFields = new Set();
   let unknownFields = new Map();
+  let learnedAnswerBuffer = new Map();
   let replayAction = null;
+  let autoFillTimer = null;
+  let lastFormSignature = "";
   let cachedSettings = { autoFill: true, requireCaptchaConfirmation: true, blockAutomaticSubmit: true };
 
   chrome.storage.local.get("settings").then(({ settings = {} }) => {
@@ -74,11 +77,27 @@
     return normalize(pieces.filter(Boolean).join(" "));
   }
 
-  function supportedFields() {
-    return [...document.querySelectorAll("input, textarea, select")].filter((field) => {
+  function candidateFields(root) {
+    return [...root.querySelectorAll("input, textarea, select")].filter((field) => {
       const type = (field.type || "").toLowerCase();
       return visible(field) && !field.disabled && !field.readOnly && !["hidden", "password", "submit", "button", "reset", "file", "image", "checkbox", "radio"].includes(type);
     });
+  }
+
+  function activeFormScope() {
+    const dialogs = [...document.querySelectorAll('[role="dialog"], dialog[open]')].filter((node) => visible(node) && candidateFields(node).length);
+    if (dialogs.length) return dialogs.at(-1);
+    const forms = [...document.querySelectorAll("form")].filter((node) => {
+      const fields = candidateFields(node);
+      const context = normalize(`${node.getAttribute("aria-label") || ""} ${node.innerText || ""}`);
+      return visible(node) && fields.length && (fields.length >= 2 || /apply|application|candidate|resume|education|experience|contact info/.test(context));
+    });
+    return forms.sort((a, b) => candidateFields(b).length - candidateFields(a).length)[0] || null;
+  }
+
+  function supportedFields() {
+    const scope = activeFormScope();
+    return scope ? candidateFields(scope) : [];
   }
 
   function matchField(field, profile) {
@@ -139,8 +158,9 @@
     if (trusted.source !== "server") return { filled:0, unknown:0, connected:false, warning:trusted.warning };
     let count = 0;
     let unknown = 0;
-    unknownFields = new Map();
-    for (const field of supportedFields()) {
+    const fields = supportedFields();
+    for (const [field] of unknownFields) if (!document.contains(field)) unknownFields.delete(field);
+    for (const field of fields) {
       if (field.value?.trim()) continue;
       const match = matchField(field, profile);
       if (match && match.score >= (settings.confidenceThreshold || .72)) {
@@ -154,8 +174,8 @@
         }
       }
     }
-    if (count || unknown) showAgentHint(count, unknown);
-    return { filled: count, unknown, connected:true };
+    showAgentHint(count, unknown);
+    return { filled: count, unknown, total:fields.length, connected:true };
   }
 
   function showAgentHint(filled, unknown) {
@@ -163,7 +183,8 @@
     const hint = document.createElement("button");
     hint.id = "applymate-hint";
     hint.type = "button";
-    hint.innerHTML = `<strong>ApplyMate</strong><span>${filled} filled · ${unknown} need you</span>`;
+    const summary = filled || unknown ? `${filled} filled · ${unknown} need you` : "Current step is complete";
+    hint.innerHTML = `<strong>ApplyMate</strong><span>${summary}</span>`;
     hint.addEventListener("click", () => showReview());
     document.documentElement.appendChild(hint);
   }
@@ -174,7 +195,7 @@
   }
 
   function newAnswers() {
-    const deduped = new Map();
+    const deduped = new Map(learnedAnswerBuffer);
     for (const [field, original] of unknownFields) {
       if (!document.contains(field)) continue;
       const value = fieldValue(field);
@@ -228,6 +249,7 @@
           confirm.disabled = false;
           return;
         }
+        learnedAnswerBuffer.clear();
       }
       const actionToReplay = replayAction;
       replayAction = null;
@@ -256,9 +278,17 @@
     showReview(target);
   }, true);
 
-  document.addEventListener("input", (event) => {
-    if (unknownFields.has(event.target)) event.target.classList.toggle("applymate-needs-input", !fieldValue(event.target));
-  }, true);
+  function trackUnknownAnswer(event) {
+    const original = unknownFields.get(event.target);
+    if (!original) return;
+    const value = fieldValue(event.target);
+    event.target.classList.toggle("applymate-needs-input", !value);
+    const key = normalize(original.label).slice(0, 180);
+    if (key && value && !sensitive.test(original.label)) learnedAnswerBuffer.set(key, { label:original.label.slice(0, 180), value:value.slice(0, 1000) });
+    else if (key) learnedAnswerBuffer.delete(key);
+  }
+  document.addEventListener("input", trackUnknownAnswer, true);
+  document.addEventListener("change", trackUnknownAnswer, true);
 
   chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
     if (message?.type === "APPLYMATE_PING") sendResponse({ ok: true });
@@ -276,5 +306,17 @@
     await fill();
   }
 
-  setTimeout(autoFillPage, 650);
+  function scheduleAutoFill() {
+    clearTimeout(autoFillTimer);
+    autoFillTimer = setTimeout(async () => {
+      const fields = supportedFields();
+      const signature = fields.map((field) => `${field.tagName}:${field.type}:${field.name}:${field.id}:${fieldLabel(field)}`).join("|");
+      if (!signature || signature === lastFormSignature) return;
+      lastFormSignature = signature;
+      await autoFillPage();
+    }, 350);
+  }
+
+  new MutationObserver(scheduleAutoFill).observe(document.documentElement, { childList:true, subtree:true });
+  setTimeout(scheduleAutoFill, 650);
 })();
