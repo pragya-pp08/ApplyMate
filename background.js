@@ -15,7 +15,10 @@ chrome.runtime.onInstalled.addListener(async ({ reason }) => {
   if (reason === "install") {
     await chrome.runtime.openOptionsPage();
   }
+  await installAgentInOpenTabs();
 });
+
+chrome.runtime.onStartup.addListener(installAgentInOpenTabs);
 
 chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
   if (message?.type === "OPEN_OPTIONS") {
@@ -63,4 +66,12 @@ async function saveLearnedAnswers(answers) {
     if (!response.ok) throw new Error(payload.error || "Could not save new answers.");
     return { ok:true, saved:payload.saved || 0 };
   } catch (error) { return { ok:false, error:error.message || "Could not save new answers." }; }
+}
+
+async function installAgentInOpenTabs() {
+  const tabs = await chrome.tabs.query({ url:["http://*/*", "https://*/*"] });
+  await Promise.allSettled(tabs.filter((tab) => tab.id).map(async (tab) => {
+    await chrome.scripting.insertCSS({ target:{ tabId:tab.id }, files:["content.css"] });
+    await chrome.scripting.executeScript({ target:{ tabId:tab.id }, files:["content.js"] });
+  }));
 }

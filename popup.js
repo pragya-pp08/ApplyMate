@@ -55,10 +55,11 @@ fillButton.addEventListener("click", async () => {
   status.textContent = "Matching your saved answers…";
   try {
     const result = await send("APPLYMATE_FILL");
+    if (!result.connected) throw new Error(result.warning || "ApplyMate is not connected to your dashboard.");
     status.textContent = `Filled ${result.filled} field${result.filled === 1 ? "" : "s"}. ${result.unknown} still need you.`;
     document.querySelector("#knownCount").textContent = result.filled;
     document.querySelector("#unknownCount").textContent = result.unknown;
-    window.close();
+    setTimeout(() => window.close(), 900);
   } catch (error) {
     status.textContent = error.message || "Could not fill this page.";
     fillButton.disabled = false;

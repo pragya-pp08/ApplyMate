@@ -1,6 +1,7 @@
 (() => {
-  if (window.__applyMateLoaded) return;
-  window.__applyMateLoaded = true;
+  const AGENT_VERSION = "0.2.2";
+  if (window.__applyMateVersion === AGENT_VERSION) return;
+  window.__applyMateVersion = AGENT_VERSION;
 
   const rules = [
     ["firstName", ["first name", "given name", "forename"]],
@@ -85,7 +86,7 @@
   }
 
   function activeFormScope() {
-    const dialogs = [...document.querySelectorAll('[role="dialog"], dialog[open]')].filter((node) => visible(node) && candidateFields(node).length);
+    const dialogs = [...document.querySelectorAll('[role="dialog"], dialog[open], .jobs-easy-apply-modal, .artdeco-modal, [data-test-modal]')].filter((node) => visible(node) && candidateFields(node).length);
     if (dialogs.length) return dialogs.at(-1);
     const forms = [...document.querySelectorAll("form")].filter((node) => {
       const fields = candidateFields(node);
@@ -155,13 +156,17 @@
       chrome.storage.local.get("settings")
     ]);
     const { profile = {} } = trusted;
-    if (trusted.source !== "server") return { filled:0, unknown:0, connected:false, warning:trusted.warning };
+    if (trusted.source !== "server") {
+      showAgentError(trusted.warning || "ApplyMate is not connected to the dashboard.");
+      return { filled:0, unknown:0, connected:false, warning:trusted.warning };
+    }
     let count = 0;
     let unknown = 0;
+    let complete = 0;
     const fields = supportedFields();
     for (const [field] of unknownFields) if (!document.contains(field)) unknownFields.delete(field);
     for (const field of fields) {
-      if (field.value?.trim()) continue;
+      if (field.value?.trim()) { complete++; continue; }
       const match = matchField(field, profile);
       if (match && match.score >= (settings.confidenceThreshold || .72)) {
         if (setValue(field, match.value)) count++;
@@ -174,18 +179,29 @@
         }
       }
     }
-    showAgentHint(count, unknown);
-    return { filled: count, unknown, total:fields.length, connected:true };
+    showAgentHint(count, unknown, complete);
+    return { filled:count, unknown, complete, total:fields.length, connected:true };
   }
 
-  function showAgentHint(filled, unknown) {
+  function showAgentHint(filled, unknown, complete = 0) {
     document.querySelector("#applymate-hint")?.remove();
     const hint = document.createElement("button");
     hint.id = "applymate-hint";
     hint.type = "button";
-    const summary = filled || unknown ? `${filled} filled · ${unknown} need you` : "Current step is complete";
+    const summary = filled ? `${filled} filled · ${unknown} need you` : unknown ? `${complete} already complete · ${unknown} need you` : "Current step is complete";
     hint.innerHTML = `<strong>ApplyMate</strong><span>${summary}</span>`;
     hint.addEventListener("click", () => showReview());
+    document.documentElement.appendChild(hint);
+  }
+
+  function showAgentError(message) {
+    document.querySelector("#applymate-hint")?.remove();
+    const hint = document.createElement("button");
+    hint.id = "applymate-hint";
+    hint.type = "button";
+    hint.className = "applymate-error";
+    hint.innerHTML = `<strong>ApplyMate needs attention</strong><span>${escapeHtml(message)}</span>`;
+    hint.addEventListener("click", () => chrome.runtime.sendMessage({ type:"OPEN_OPTIONS" }));
     document.documentElement.appendChild(hint);
   }
 
@@ -278,6 +294,15 @@
     showReview(target);
   }, true);
 
+  document.addEventListener("click", (event) => {
+    const target = event.target.closest("button, [role='button'], a");
+    const text = normalize(`${target?.innerText || ""} ${target?.getAttribute("aria-label") || ""}`);
+    if (/easy apply|continue|next|review application/.test(text)) {
+      setTimeout(scheduleAutoFill, 250);
+      setTimeout(scheduleAutoFill, 900);
+    }
+  }, true);
+
   function trackUnknownAnswer(event) {
     const original = unknownFields.get(event.target);
     if (!original) return;
@@ -303,7 +328,8 @@
     const { settings = {}, connection = {} } = await chrome.storage.local.get(["settings", "connection"]);
     if (settings.autoFill === false || !supportedFields().length) return;
     try { if (connection.serverUrl && new URL(connection.serverUrl).origin === location.origin) return; } catch {}
-    await fill();
+    try { await fill(); }
+    catch { showAgentError("The browser agent was reloaded. Refresh this application tab once."); }
   }
 
   function scheduleAutoFill() {
