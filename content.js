@@ -1,5 +1,5 @@
 (() => {
-  const AGENT_VERSION = "0.2.3";
+  const AGENT_VERSION = "0.2.4";
   if (window.__applyMateVersion === AGENT_VERSION) return;
   window.__applyMateVersion = AGENT_VERSION;
 
@@ -24,8 +24,8 @@
     ["gpa", ["cgpa", "gpa", "grade point average"]],
     ["tenthPercentage", ["10th percentage", "class 10 percentage", "secondary percentage"]],
     ["twelfthPercentage", ["12th percentage", "class 12 percentage", "higher secondary percentage"]],
-    ["companyName", ["company name", "employer name", "current company", "current employer"]],
-    ["companyRole", ["company role", "job title", "current role", "current job title", "designation"]],
+    ["companyName", ["company name", "employer name", "current company", "current employer", "company"]],
+    ["companyRole", ["company role", "job title", "current role", "current job title", "designation", "your title"]],
     ["currentlyWorking", ["currently working", "currently employed", "still working", "presently working"]],
     ["employmentDuration", ["employment duration", "work duration", "duration", "employment period"]],
     ["skills", ["technical skills", "key skills", "skills"]],
@@ -36,6 +36,8 @@
 
   const sensitive = /password|passcode|otp|one.?time|captcha|verification|credit|debit|card number|cvv|bank|aadhaar|aadhar|pan number|social security|signature|gender|race|ethnic|disability|veteran|religion|consent|terms|agree/i;
   const employmentKeys = new Set(["companyName", "companyRole", "currentlyWorking", "employmentDuration"]);
+  const personalLocationKeys = new Set(["city", "state", "country", "postalCode"]);
+  const monthNames = ["january", "february", "march", "april", "may", "june", "july", "august", "september", "october", "november", "december"];
   let filledFields = new Set();
   let unknownFields = new Map();
   let learnedAnswerBuffer = new Map();
@@ -94,7 +96,39 @@
       const marker = normalize(`${node.getAttribute("aria-label") || ""} ${heading}`);
       if (/work experience|employment history|professional experience|employment experience|add experience/.test(marker)) return true;
     }
+    const formText = normalize(field.closest("[role='dialog'], form")?.innerText || "");
+    if (/work experience/.test(formText) && /dates of employment|add work experience|edit experience/.test(formText)) return true;
     return false;
+  }
+
+  function parseEmploymentDuration(value = "") {
+    const text = String(value).toLowerCase().replace(/[–—]/g, "-");
+    const parts = text.split(/\s*-\s*|\s+to\s+/).map((part) => part.trim()).filter(Boolean);
+    const parsePart = (part) => {
+      const month = monthNames.find((name) => new RegExp(`\\b${name.slice(0, 3)}(?:${name.slice(3)})?\\b`, "i").test(part));
+      const year = part.match(/\b(?:19|20)\d{2}\b/)?.[0] || "";
+      return { month, year };
+    };
+    const start = parsePart(parts[0] || text);
+    const endText = parts[1] || "";
+    const end = parsePart(endText);
+    return { start, end, present:/present|current|now|ongoing/.test(endText || text) };
+  }
+
+  function employmentDateMatch(field, profile, fields) {
+    if (field.tagName !== "SELECT" || !profile.employmentDuration || !employmentContext(field, fieldLabel(field))) return null;
+    const duration = parseEmploymentDuration(profile.employmentDuration);
+    const optionText = [...field.options].map((option) => normalize(option.textContent));
+    const isMonth = monthNames.filter((month) => optionText.includes(month)).length >= 6;
+    const isYear = optionText.filter((option) => /^(?:19|20)\d{2}$/.test(option)).length >= 3;
+    if (!isMonth && !isYear) return null;
+    const peers = fields.filter((candidate) => candidate.tagName === "SELECT" && employmentContext(candidate, fieldLabel(candidate)) && (() => {
+      const values = [...candidate.options].map((option) => normalize(option.textContent));
+      return isMonth ? monthNames.filter((month) => values.includes(month)).length >= 6 : values.filter((option) => /^(?:19|20)\d{2}$/.test(option)).length >= 3;
+    })());
+    const isEnd = peers.indexOf(field) > 0;
+    const value = isMonth ? (isEnd ? duration.end.month : duration.start.month) : (isEnd ? duration.end.year : duration.start.year);
+    return value ? { key:"employmentDuration", value, score:1, label:fieldLabel(field) } : null;
   }
 
   function activeFormScope() {
@@ -116,10 +150,12 @@
   function matchField(field, profile) {
     const label = fieldLabel(field);
     if (!label || sensitive.test(label)) return null;
+    const inEmployment = employmentContext(field, label);
     let best = null;
     for (const [key, aliases] of rules) {
       if (!profile[key]) continue;
-      if (employmentKeys.has(key) && !employmentContext(field, label)) continue;
+      if (employmentKeys.has(key) && !inEmployment) continue;
+      if (personalLocationKeys.has(key) && inEmployment) continue;
       for (const alias of aliases) {
         const exact = label === alias;
         const contained = alias === "name" ? false : label.includes(alias);
@@ -155,6 +191,21 @@
     return true;
   }
 
+  function fillEmploymentStatus(profile) {
+    const desired = /^(yes|true|currently|present)$/i.test(String(profile.currentlyWorking || "").trim());
+    if (!profile.currentlyWorking) return 0;
+    const scope = activeFormScope();
+    const checkbox = [...(scope?.querySelectorAll("input[type='checkbox']") || [])].find((field) => {
+      const label = fieldLabel(field);
+      return visible(field) && !field.disabled && /currently work|currently employed|still work|presently work/.test(label) && employmentContext(field, label);
+    });
+    if (!checkbox || checkbox.checked === desired) return 0;
+    checkbox.click();
+    checkbox.classList.add("applymate-filled");
+    filledFields.add(checkbox);
+    return 1;
+  }
+
   async function scan() {
     const trusted = await chrome.runtime.sendMessage({ type: "GET_TRUSTED_PROFILE" });
     const { profile = {} } = trusted;
@@ -173,14 +224,14 @@
       showAgentError(trusted.warning || "ApplyMate is not connected to the dashboard.");
       return { filled:0, unknown:0, connected:false, warning:trusted.warning };
     }
-    let count = 0;
+    let count = fillEmploymentStatus(profile);
     let unknown = 0;
     let complete = 0;
     const fields = supportedFields();
     for (const [field] of unknownFields) if (!document.contains(field)) unknownFields.delete(field);
     for (const field of fields) {
       if (field.value?.trim()) { complete++; continue; }
-      const match = matchField(field, profile);
+      const match = employmentDateMatch(field, profile, fields) || matchField(field, profile);
       if (match && match.score >= (settings.confidenceThreshold || .72)) {
         if (setValue(field, match.value)) count++;
       } else {
@@ -219,6 +270,7 @@
   }
 
   function fieldValue(field) {
+    if (field.type === "checkbox") return field.checked ? "Yes" : "No";
     if (field.tagName === "SELECT") return field.options[field.selectedIndex]?.text?.trim() || field.value.trim();
     return field.value?.trim() || "";
   }
@@ -245,7 +297,7 @@
     const { settings = {} } = await chrome.storage.local.get("settings");
     const entries = [...filledFields].filter((field) => document.contains(field)).map((field) => ({
       label: fieldLabel(field) || "Form field",
-      value: field.value || field.options?.[field.selectedIndex]?.text || ""
+      value: fieldValue(field)
     }));
     const learned = newAnswers();
     const unknown = supportedFields().filter((field) => !field.value?.trim() && !sensitive.test(fieldLabel(field))).length;
