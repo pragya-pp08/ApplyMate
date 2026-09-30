@@ -3,6 +3,7 @@ const pageHost = document.querySelector("#pageHost");
 const fillButton = document.querySelector("#fillButton");
 const reviewButton = document.querySelector("#reviewButton");
 const status = document.querySelector("#status");
+document.querySelector("#versionBadge").textContent = `v${chrome.runtime.getManifest().version}`;
 
 async function activeTab() {
   const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
@@ -54,7 +55,7 @@ fillButton.addEventListener("click", async () => {
     status.textContent = `Filled ${result.filled} field${result.filled === 1 ? "" : "s"}. ${result.unknown} still need you.`;
     document.querySelector("#knownCount").textContent = result.filled;
     document.querySelector("#unknownCount").textContent = result.unknown;
-    setTimeout(() => window.close(), 900);
+    if (result.filled > 0) setTimeout(() => window.close(), 900);
   } catch (error) {
     status.textContent = error.message || "Could not fill this page.";
     fillButton.disabled = false;

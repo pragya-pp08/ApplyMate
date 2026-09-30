@@ -1,5 +1,5 @@
 (() => {
-  const AGENT_VERSION = "0.2.5";
+  const AGENT_VERSION = "0.2.6";
   if (window.__applyMateVersion === AGENT_VERSION) return;
   window.__applyMateVersion = AGENT_VERSION;
 
@@ -96,8 +96,10 @@
       const marker = normalize(`${node.getAttribute("aria-label") || ""} ${heading}`);
       if (/work experience|employment history|professional experience|employment experience|add experience/.test(marker)) return true;
     }
-    const formText = normalize(field.closest("[role='dialog'], form")?.innerText || "");
-    if (/work experience/.test(formText) && /dates of employment|add work experience|edit experience/.test(formText)) return true;
+    const dialogText = normalize(field.closest("[role='dialog']")?.innerText || "");
+    const formText = normalize(field.closest("form")?.innerText || "");
+    const surroundingText = `${dialogText} ${formText}`;
+    if (/dates of employment/.test(surroundingText) && /work experience|add work experience|edit experience|delete experience/.test(surroundingText)) return true;
     return false;
   }
 
