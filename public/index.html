@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <meta name="description" content="ApplyMate — your private, human-in-the-loop application agent." />
     <title>ApplyMate</title>
-    <link rel="stylesheet" href="/styles.css?v=11" />
+    <link rel="stylesheet" href="/styles.css?v=12" />
   </head>
   <body>
     <div id="authView" class="auth-shell">
@@ -41,10 +41,10 @@
       <aside class="sidebar">
         <a class="wordmark" href="#inbox"><span>A</span> ApplyMate</a>
         <nav>
-          <button class="nav-item active" data-view="inbox"><i></i>Applications</button>
+          <button class="nav-item active" data-view="inbox"><i></i>Form inbox</button>
           <button class="nav-item" data-view="profile"><i></i>Profile</button>
           <button class="nav-item" data-view="connections"><i></i>Connections</button>
-          <button class="nav-item" data-view="safety"><i></i>Privacy & activity</button>
+          <button class="nav-item" data-view="safety"><i></i>More info</button>
         </nav>
         <div class="agent-state"><span class="pulse"></span><div><strong>Extension ready</strong><small>Forms require your approval</small></div></div>
         <div class="user-row"><div id="avatar">A</div><div><strong id="userName"></strong><small id="userEmail"></small></div><button id="logoutButton" title="Sign out">↪</button></div>
@@ -52,20 +52,20 @@
 
       <main class="workspace">
         <section id="inboxView" class="view">
-          <header class="page-header"><div><p class="kicker">OVERVIEW</p><h1>Applications</h1><p class="header-note">Track forms you want to complete and applications you have sent.</p></div><button id="newApplicationButton" class="button primary">Add application</button></header>
+          <header class="page-header"><div><p class="kicker">YOUR AGENT</p><h1>Form inbox</h1><p class="header-note">Forms collected from your links and connected sources appear here for review.</p></div><button id="newApplicationButton" class="button primary">Add form link</button></header>
           <div class="metrics">
             <article><span>TO DO</span><strong id="openMetric">0</strong><small>applications</small></article>
             <article><span>READY</span><strong id="readyMetric">0</strong><small>for your review</small></article>
             <article><span>APPLIED</span><strong id="appliedMetric">0</strong><small>submitted</small></article>
             <article class="safety-metric"><span>SUBMISSION</span><strong>Manual</strong><small>always confirmed by you</small></article>
           </div>
-          <div class="toolbar"><div class="filter-group"><button class="filter active" data-filter="all">All</button><button class="filter" data-filter="new">New</button><button class="filter" data-filter="ready">Ready</button><button class="filter" data-filter="applied">Applied</button></div><input id="searchInput" type="search" placeholder="Search company or role" /></div>
+          <div class="toolbar"><div class="filter-group"><button class="filter active" data-filter="all">All</button><button class="filter" data-filter="new">New</button><button class="filter" data-filter="ready">Ready</button><button class="filter" data-filter="applied">Submitted</button></div></div>
           <div id="applicationList" class="application-list"></div>
           <div id="emptyState" class="empty-state"><div class="empty-icon">＋</div><h2>No applications yet</h2><p>Add a form link from email, LinkedIn, WhatsApp, or your placement office.</p><button class="button secondary" id="emptyAddButton">Add an application</button></div>
         </section>
 
         <section id="profileView" class="view" hidden>
-          <header class="page-header"><div><p class="kicker">SAVED DETAILS</p><h1>Your profile</h1><p class="header-note">These details are used only when you ask ApplyMate to fill a form.</p></div><button form="profileForm" class="button primary" type="submit">Save profile</button></header>
+          <header class="page-header"><div><p class="kicker">SAVED DETAILS</p><h1>Your profile</h1><p class="header-note">These details are used only when you ask ApplyMate to fill a form.</p></div></header>
           <p class="page-intro"><span class="required-star" aria-hidden="true">*</span> All profile details are required. Blank fields are never guessed, and you will confirm everything before it is saved.</p>
           <section class="resume-import" id="resumeImport">
             <div class="resume-copy"><span class="resume-symbol">↥</span><div><h2>Fill from your CV</h2><p>Upload a PDF, DOCX, or TXT resume. ApplyMate will suggest details for empty fields and let you review them before saving.</p></div></div>
@@ -95,6 +95,7 @@
             <fieldset><legend>Skills and links</legend><div class="field-grid">
               <label class="wide">Skills <span class="required-star" aria-hidden="true">*</span><input name="skills" required /></label><label class="wide">LinkedIn URL <span class="required-star" aria-hidden="true">*</span><input name="linkedin" type="url" required /></label><label class="wide">GitHub URL <span class="required-star" aria-hidden="true">*</span><input name="github" type="url" required /></label><label class="wide">Portfolio URL <span class="required-star" aria-hidden="true">*</span><input name="portfolio" type="url" required /></label>
             </div></fieldset>
+            <div class="profile-actions"><p id="profileFormMessage" role="status"></p><button id="saveProfileButton" class="button primary" type="submit">Save profile</button></div>
           </form>
         </section>
 
@@ -110,7 +111,7 @@
         </section>
 
         <section id="safetyView" class="view" hidden>
-          <header class="page-header"><div><p class="kicker">ACCOUNT</p><h1>Privacy & activity</h1><p class="header-note">Review how your data is protected and what ApplyMate has done.</p></div></header>
+          <header class="page-header"><div><p class="kicker">ABOUT APPLYMATE</p><h1>More info</h1><p class="header-note">Privacy, activity history, safety rules, and account controls.</p></div></header>
           <div class="safety-grid">
             <article><span>01</span><h2>Encrypted profile</h2><p>Your reusable profile is encrypted with AES-256-GCM before being written to the database.</p></article>
             <article><span>02</span><h2>No silent submission</h2><p>The extension blocks its first submit attempt and asks you to review assisted answers.</p></article>
@@ -125,13 +126,14 @@
 
     <dialog id="applicationDialog">
       <form id="applicationForm" method="dialog">
-        <div class="dialog-head"><div><p class="kicker">NEW OPPORTUNITY</p><h2>Add an application</h2></div><button type="button" id="closeDialog" aria-label="Close">✕</button></div>
+        <div class="dialog-head"><div><p class="kicker">NEW FORM</p><h2>Add a form link</h2></div><button type="button" id="closeDialog" aria-label="Close">✕</button></div>
         <div class="field-grid"><label>Company<input name="company" required /></label><label>Role<input name="role" required /></label><label>Source<select name="source"><option value="manual">Manual</option><option value="email">Email</option><option value="linkedin">LinkedIn</option><option value="whatsapp">WhatsApp</option><option value="placement">Placement office</option><option value="other">Other</option></select></label><label>Deadline<input name="deadline" type="date" /></label><label class="wide">Application URL<input name="url" type="url" placeholder="https://…" /></label><label class="wide">Notes<textarea name="notes" rows="4"></textarea></label></div>
         <p id="dialogError" class="error"></p><div class="dialog-actions"><button class="button secondary" type="button" id="cancelDialog">Cancel</button><button class="button primary" type="submit">Save to inbox</button></div>
       </form>
     </dialog>
 
+    <div id="profileSuccessCard" class="profile-success-card" role="status" hidden><span>✓</span><div><strong>Profile updated</strong><p>Your details are saved and ready for autofill.</p></div></div>
     <div id="toast" role="status"></div>
-    <script src="/app.js?v=11"></script>
+    <script src="/app.js?v=12"></script>
   </body>
 </html>

@@ -1,4 +1,4 @@
-const state = { user: null, applications: [], filter: "all", search: "", register: false };
+const state = { user: null, applications: [], filter: "all", register: false };
 const $ = (selector) => document.querySelector(selector);
 const $$ = (selector) => [...document.querySelectorAll(selector)];
 
@@ -77,8 +77,7 @@ function renderApplications() {
   $("#openMetric").textContent = open.length;
   $("#readyMetric").textContent = state.applications.filter((item) => item.status === "ready").length;
   $("#appliedMetric").textContent = state.applications.filter((item) => item.status === "applied").length;
-  const query = state.search.toLowerCase();
-  const filtered = state.applications.filter((item) => (state.filter === "all" || item.status === state.filter) && `${item.company} ${item.role}`.toLowerCase().includes(query));
+  const filtered = state.applications.filter((item) => state.filter === "all" || item.status === state.filter);
   const list = $("#applicationList");
   list.replaceChildren(...filtered.map(applicationCard));
   $("#emptyState").hidden = state.applications.length > 0;
@@ -113,7 +112,6 @@ async function deleteApplication(item) {
 }
 
 $$('.filter').forEach((button) => button.addEventListener("click", () => { state.filter = button.dataset.filter; $$('.filter').forEach((item) => item.classList.toggle("active", item === button)); renderApplications(); }));
-$("#searchInput").addEventListener("input", (event) => { state.search = event.target.value; renderApplications(); });
 
 const dialog = $("#applicationDialog");
 function openDialog() { $("#applicationForm").reset(); $("#dialogError").textContent = ""; dialog.showModal(); }
@@ -130,13 +128,56 @@ async function loadProfile() {
   for (const field of $("#profileForm").elements) if (field.name) field.value = profile[field.name] || "";
 }
 
-$("#profileForm").addEventListener("submit", async (event) => {
+const profileForm = $("#profileForm");
+$("#saveProfileButton").addEventListener("click", () => {
+  const message = $("#profileFormMessage");
+  message.textContent = "";
+  message.classList.remove("error");
+});
+profileForm.addEventListener("invalid", (event) => {
   event.preventDefault();
+  const message = $("#profileFormMessage");
+  if (!message.textContent) {
+    message.textContent = `Complete ${event.target.closest("label")?.childNodes[0]?.textContent.trim() || "the highlighted field"} before saving.`;
+    message.classList.add("error");
+    event.target.focus();
+  }
+}, true);
+
+profileForm.addEventListener("submit", async (event) => {
+  event.preventDefault();
+  const message = $("#profileFormMessage");
+  const saveButton = $("#saveProfileButton");
+  message.textContent = "";
+  message.classList.remove("error");
   const profile = Object.fromEntries(new FormData(event.currentTarget));
   const confirmed = window.confirm("Please confirm: Have you reviewed all profile details and want to save them to ApplyMate?");
   if (!confirmed) return;
-  await api("/api/profile", { method:"PUT", body:JSON.stringify({ profile }) }); toast("Encrypted profile saved.");
+  saveButton.disabled = true;
+  saveButton.textContent = "Saving…";
+  try {
+    await api("/api/profile", { method:"PUT", body:JSON.stringify({ profile }) });
+    await loadProfile();
+    showView("profile");
+    message.textContent = "Profile updated successfully.";
+    showProfileSuccess();
+  } catch (error) {
+    message.textContent = error.message;
+    message.classList.add("error");
+  } finally {
+    saveButton.disabled = false;
+    saveButton.textContent = "Save profile";
+  }
 });
+
+function showProfileSuccess() {
+  const card = $("#profileSuccessCard");
+  card.hidden = false;
+  card.classList.remove("show");
+  requestAnimationFrame(() => card.classList.add("show"));
+  clearTimeout(showProfileSuccess.timer);
+  showProfileSuccess.timer = setTimeout(() => { card.classList.remove("show"); setTimeout(() => { card.hidden = true; }, 220); }, 3200);
+}
 
 const resumeLabels = {
   firstName:"First name", lastName:"Last name", fullName:"Full name", email:"Email", phone:"Phone",
