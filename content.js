@@ -35,8 +35,9 @@
 
   const sensitive = /password|passcode|otp|one.?time|captcha|verification|credit|debit|card number|cvv|bank|aadhaar|aadhar|pan number|social security|signature|gender|race|ethnic|disability|veteran|religion|consent|terms|agree/i;
   let filledFields = new Set();
+  let unknownFields = new Map();
   let replayAction = null;
-  let cachedSettings = { requireCaptchaConfirmation: true, blockAutomaticSubmit: true };
+  let cachedSettings = { autoFill: true, requireCaptchaConfirmation: true, blockAutomaticSubmit: true };
 
   chrome.storage.local.get("settings").then(({ settings = {} }) => {
     cachedSettings = { ...cachedSettings, ...settings };
@@ -93,6 +94,13 @@
         if (score && (!best || score > best.score)) best = { key, value: profile[key], score, label };
       }
     }
+    for (const [key, answer] of Object.entries(profile.customAnswers || {})) {
+      if (!answer?.value) continue;
+      const exact = label === key;
+      const contained = key.length >= 8 && (label.includes(key) || key.includes(label));
+      const score = exact ? 1 : contained ? .86 : 0;
+      if (score && (!best || score > best.score)) best = { key:`custom:${key}`, value:answer.value, score, label };
+    }
     return best;
   }
 
@@ -115,19 +123,23 @@
   }
 
   async function scan() {
-    const { profile = {} } = await chrome.runtime.sendMessage({ type: "GET_TRUSTED_PROFILE" });
+    const trusted = await chrome.runtime.sendMessage({ type: "GET_TRUSTED_PROFILE" });
+    const { profile = {} } = trusted;
     const fields = supportedFields();
     const matches = fields.map((field) => matchField(field, profile));
-    return { total: fields.length, known: matches.filter(Boolean).length, unknown: matches.filter((match) => !match).length };
+    return { total: fields.length, known: matches.filter(Boolean).length, unknown: matches.filter((match) => !match).length, connected:trusted.source === "server", warning:trusted.warning };
   }
 
   async function fill() {
-    const [{ profile = {} }, { settings = {} }] = await Promise.all([
+    const [trusted, { settings = {} }] = await Promise.all([
       chrome.runtime.sendMessage({ type: "GET_TRUSTED_PROFILE" }),
       chrome.storage.local.get("settings")
     ]);
+    const { profile = {} } = trusted;
+    if (trusted.source !== "server") return { filled:0, unknown:0, connected:false, warning:trusted.warning };
     let count = 0;
     let unknown = 0;
+    unknownFields = new Map();
     for (const field of supportedFields()) {
       if (field.value?.trim()) continue;
       const match = matchField(field, profile);
@@ -135,9 +147,42 @@
         if (setValue(field, match.value)) count++;
       } else {
         unknown++;
+        const label = fieldLabel(field);
+        if (label && !sensitive.test(label)) {
+          unknownFields.set(field, { label, initialValue:field.value || "" });
+          field.classList.add("applymate-needs-input");
+        }
       }
     }
-    return { filled: count, unknown };
+    if (count || unknown) showAgentHint(count, unknown);
+    return { filled: count, unknown, connected:true };
+  }
+
+  function showAgentHint(filled, unknown) {
+    document.querySelector("#applymate-hint")?.remove();
+    const hint = document.createElement("button");
+    hint.id = "applymate-hint";
+    hint.type = "button";
+    hint.innerHTML = `<strong>ApplyMate</strong><span>${filled} filled · ${unknown} need you</span>`;
+    hint.addEventListener("click", () => showReview());
+    document.documentElement.appendChild(hint);
+  }
+
+  function fieldValue(field) {
+    if (field.tagName === "SELECT") return field.options[field.selectedIndex]?.text?.trim() || field.value.trim();
+    return field.value?.trim() || "";
+  }
+
+  function newAnswers() {
+    const deduped = new Map();
+    for (const [field, original] of unknownFields) {
+      if (!document.contains(field)) continue;
+      const value = fieldValue(field);
+      if (!value || value === original.initialValue || sensitive.test(original.label)) continue;
+      const key = normalize(original.label).slice(0, 180);
+      if (key) deduped.set(key, { label:original.label.slice(0, 180), value:value.slice(0, 1000) });
+    }
+    return [...deduped.values()];
   }
 
   function closeReview() {
@@ -152,6 +197,7 @@
       label: fieldLabel(field) || "Form field",
       value: field.value || field.options?.[field.selectedIndex]?.text || ""
     }));
+    const learned = newAnswers();
     const unknown = supportedFields().filter((field) => !field.value?.trim() && !sensitive.test(fieldLabel(field))).length;
     const root = document.createElement("div");
     root.id = "applymate-root";
@@ -160,7 +206,9 @@
         <div class="am-top"><div><span class="am-kicker">FINAL CHECK</span><h2 id="am-title">Review your application</h2><p class="am-sub">${entries.length} assisted answer${entries.length === 1 ? "" : "s"} on ${escapeHtml(location.hostname)}</p></div><button class="am-close" aria-label="Close">✕</button></div>
         ${unknown ? `<div class="am-warning"><strong>${unknown} field${unknown === 1 ? "" : "s"} still look unanswered.</strong> Check the page and complete every unique or required question before submitting.</div>` : ""}
         <div class="am-list">${entries.length ? entries.map((entry) => `<div class="am-row"><span class="am-label" title="${escapeHtml(entry.label)}">${escapeHtml(entry.label)}</span><span class="am-value" title="${escapeHtml(entry.value)}">${escapeHtml(entry.value)}</span><span class="am-badge">AUTOFILLED</span></div>`).join("") : `<div class="am-empty">No answers were filled by ApplyMate on this page. Review the form directly before continuing.</div>`}</div>
+        ${learned.length ? `<div class="am-learn"><strong>${learned.length} new answer${learned.length === 1 ? "" : "s"} can be remembered</strong>${learned.map((entry) => `<div><span>${escapeHtml(entry.label)}</span><b>${escapeHtml(entry.value)}</b></div>`).join("")}<label><input id="am-remember" type="checkbox" checked /> Remember these approved answers in my encrypted ApplyMate profile.</label></div>` : ""}
         <label class="am-check"><input id="am-captcha" type="checkbox" /><span>I reviewed every answer and completed any CAPTCHA or human-verification challenge on the page.</span></label>
+        <p class="am-save-error" role="status"></p>
         <div class="am-actions"><button class="am-secondary">Go back and edit</button><button class="am-primary" disabled>${replayAction ? "Confirm and submit" : "Confirm review"}</button></div>
       </div>`;
     document.documentElement.appendChild(root);
@@ -170,7 +218,17 @@
     if (settings.requireCaptchaConfirmation === false) confirm.disabled = false;
     root.querySelector(".am-close").addEventListener("click", closeReview);
     root.querySelector(".am-secondary").addEventListener("click", closeReview);
-    confirm.addEventListener("click", () => {
+    confirm.addEventListener("click", async () => {
+      confirm.disabled = true;
+      const remember = root.querySelector("#am-remember")?.checked;
+      if (remember && learned.length) {
+        const saved = await chrome.runtime.sendMessage({ type:"SAVE_LEARNED_ANSWERS", answers:learned });
+        if (!saved?.ok) {
+          root.querySelector(".am-save-error").textContent = `${saved?.error || "Could not remember the new answers."} Uncheck “Remember” to continue without saving them.`;
+          confirm.disabled = false;
+          return;
+        }
+      }
       const actionToReplay = replayAction;
       replayAction = null;
       closeReview();
@@ -198,6 +256,10 @@
     showReview(target);
   }, true);
 
+  document.addEventListener("input", (event) => {
+    if (unknownFields.has(event.target)) event.target.classList.toggle("applymate-needs-input", !fieldValue(event.target));
+  }, true);
+
   chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
     if (message?.type === "APPLYMATE_PING") sendResponse({ ok: true });
     else if (message?.type === "APPLYMATE_SCAN") scan().then(sendResponse);
@@ -206,4 +268,13 @@
     else return false;
     return true;
   });
+
+  async function autoFillPage() {
+    const { settings = {}, connection = {} } = await chrome.storage.local.get(["settings", "connection"]);
+    if (settings.autoFill === false || !supportedFields().length) return;
+    try { if (connection.serverUrl && new URL(connection.serverUrl).origin === location.origin) return; } catch {}
+    await fill();
+  }
+
+  setTimeout(autoFillPage, 650);
 })();

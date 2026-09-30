@@ -3,102 +3,33 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>Your ApplyMate profile</title>
+    <title>Connect ApplyMate</title>
     <link rel="stylesheet" href="options.css" />
   </head>
   <body>
-    <main>
-      <aside>
+    <main class="setup-shell">
+      <section class="setup-card">
         <div class="brand"><span>A</span> ApplyMate</div>
-        <p>Answer once. Review what changed. Submit with confidence.</p>
-        <nav>
-          <a href="#identity">Identity</a>
-          <a href="#education">Education</a>
-          <a href="#career">Career</a>
-          <a href="#links">Links</a>
-          <a href="#safety">Safety</a>
-        </nav>
-        <div class="privacy"><strong>Stored on this device</strong><br />Your profile is not uploaded by this MVP.</div>
-      </aside>
-      <form id="profileForm">
-        <header>
-          <div><span class="eyebrow">PRIVATE PROFILE</span><h1>Tell your agent once.</h1></div>
-          <button type="submit">Save profile</button>
-        </header>
-        <p class="intro">Only add information you are comfortable using in applications. Empty answers are never guessed.</p>
-
-        <section id="identity">
-          <h2>Identity and contact</h2>
-          <div class="grid">
-            <label>First name<input name="firstName" autocomplete="given-name" /></label>
-            <label>Last name<input name="lastName" autocomplete="family-name" /></label>
-            <label class="wide">Full name<input name="fullName" autocomplete="name" /></label>
-            <label>Email<input name="email" type="email" autocomplete="email" /></label>
-            <label>Phone<input name="phone" type="tel" autocomplete="tel" /></label>
-            <label>City<input name="city" autocomplete="address-level2" /></label>
-            <label>State<input name="state" autocomplete="address-level1" /></label>
-            <label>Country<input name="country" autocomplete="country-name" /></label>
-            <label>Postal code<input name="postalCode" autocomplete="postal-code" /></label>
-          </div>
+        <div class="agent-mark"><span>✓</span></div>
+        <p class="eyebrow">ONE-TIME SETUP</p>
+        <h1>Connect your browser agent.</h1>
+        <p class="intro">Your profile stays in the ApplyMate dashboard. Connect once and the agent will securely sync it whenever you fill a form.</p>
+        <form id="connectionForm">
+          <label>ApplyMate dashboard URL<input name="serverUrl" type="url" value="http://localhost:8787" required /></label>
+          <label>Pairing token<input name="deviceToken" type="password" autocomplete="off" placeholder="am_…" required /></label>
+          <button id="connectButton" class="primary" type="submit">Connect and sync profile</button>
+        </form>
+        <section id="connectionResult" class="result" hidden>
+          <span>✓</span><div><strong id="resultTitle">Agent connected</strong><p id="resultText"></p></div>
         </section>
-
-        <section id="education">
-          <h2>Education</h2>
-          <div class="grid">
-            <label class="wide">College / university<input name="college" /></label>
-            <label class="wide">College address<input name="collegeAddress" autocomplete="street-address" /></label>
-            <label>College city<input name="collegeCity" /></label>
-            <label>College state<input name="collegeState" /></label>
-            <label>College country<input name="collegeCountry" /></label>
-            <label>Degree<input name="degree" placeholder="B.Tech" /></label>
-            <label>Field of study<input name="fieldOfStudy" placeholder="Computer Science" /></label>
-            <label>Graduation year<input name="graduationYear" inputmode="numeric" /></label>
-            <label>CGPA / GPA<input name="gpa" inputmode="decimal" /></label>
-            <label>10th percentage<input name="tenthPercentage" inputmode="decimal" /></label>
-            <label>12th percentage<input name="twelfthPercentage" inputmode="decimal" /></label>
-          </div>
+        <p id="connectionStatus" class="status" role="status"></p>
+        <section class="behavior">
+          <h2>How your agent behaves</h2>
+          <label class="check"><input id="autoFill" type="checkbox" checked /><span><strong>Fill known answers automatically</strong><small>ApplyMate fills safe matching fields when an application form opens.</small></span></label>
+          <label class="check"><input id="requireCaptchaConfirmation" type="checkbox" checked /><span><strong>Require final review and CAPTCHA confirmation</strong><small>No form is submitted until you approve it.</small></span></label>
         </section>
-
-        <section id="career">
-          <h2>Experience</h2>
-          <div class="grid">
-            <label>Company name<input name="companyName" /></label>
-            <label>Company role<input name="companyRole" /></label>
-            <label>Currently working?<select name="currentlyWorking"><option value="">Select an option</option><option value="yes">Yes</option><option value="no">No</option></select></label>
-            <label>Duration<input name="employmentDuration" placeholder="June 2024 – Present" /></label>
-          </div>
-        </section>
-
-        <section id="links">
-          <h2>Skills and links</h2>
-          <div class="grid">
-            <label class="wide">Skills<input name="skills" placeholder="JavaScript, Python, SQL" /></label>
-            <label class="wide">LinkedIn URL<input name="linkedin" type="url" /></label>
-            <label class="wide">GitHub URL<input name="github" type="url" /></label>
-            <label class="wide">Portfolio URL<input name="portfolio" type="url" /></label>
-          </div>
-        </section>
-
-        <section id="safety">
-          <h2>Safety rules</h2>
-          <label class="check"><input name="requireCaptchaConfirmation" type="checkbox" /> Require me to confirm CAPTCHA completion before every assisted submission</label>
-          <label class="check"><input name="blockAutomaticSubmit" type="checkbox" /> Block the first submit attempt and show a review</label>
-          <p class="note">Passwords, OTPs, CAPTCHAs, payment fields, signatures, consent checkboxes, and demographic declarations are never auto-filled.</p>
-        </section>
-
-        <section id="connection">
-          <h2>Deployed dashboard connection</h2>
-          <p class="note">Create a pairing token from Dashboard → Connections. The token can read only your ApplyMate account data and can be revoked by creating a replacement.</p>
-          <div class="grid">
-            <label class="wide">Dashboard URL<input name="serverUrl" type="url" placeholder="https://applymate.example.com" /></label>
-            <label class="wide">Device pairing token<input name="deviceToken" type="password" autocomplete="off" placeholder="am_…" /></label>
-          </div>
-          <button id="testConnection" class="connect" type="button">Test and sync profile</button>
-          <p id="connectionStatus" role="status"></p>
-        </section>
-
-        <div id="saved" role="status"></div>
-      </form>
+        <footer><span>Your dashboard profile is the single source of truth.</span><a id="openDashboard" href="http://localhost:8787/#connections" target="_blank">Open dashboard</a></footer>
+      </section>
     </main>
     <script src="options.js"></script>
   </body>

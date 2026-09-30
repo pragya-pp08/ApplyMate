@@ -32,12 +32,17 @@ async function init() {
     pageTitle.textContent = tab.title || "Untitled page";
     pageHost.textContent = tab.url ? new URL(tab.url).hostname : "";
     const result = await send("APPLYMATE_SCAN");
+    if (!result.connected) {
+      status.textContent = result.warning || "Connect ApplyMate before filling forms.";
+      document.querySelector("#profileButton").textContent = "Connect ApplyMate";
+      return;
+    }
     document.querySelector("#scanStats").hidden = false;
     document.querySelector("#knownCount").textContent = result.known;
     document.querySelector("#unknownCount").textContent = result.unknown;
     fillButton.disabled = result.total === 0;
     reviewButton.disabled = result.total === 0;
-    status.textContent = result.total ? `${result.total} form fields detected.` : "No supported form fields found.";
+    status.textContent = result.total ? "Your saved answers are synced. Known fields are filled automatically." : "No supported form fields found.";
   } catch {
     pageTitle.textContent = "This page cannot be accessed";
     pageHost.textContent = "Try opening an application form in a normal tab.";

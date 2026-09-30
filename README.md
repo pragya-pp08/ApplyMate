@@ -5,7 +5,7 @@ ApplyMate is a human-in-the-loop personal application agent. It collects applica
 ## Product components
 
 - **Web dashboard:** account, encrypted trusted profile, application inbox, status tracking, Gmail discovery, audit history, data export, and account deletion.
-- **Chrome extension:** semantic field matching, confidence-based autofill, visible highlighting, unanswered-question counts, and a mandatory review/CAPTCHA confirmation gate.
+- **Browser agent:** automatically syncs the encrypted dashboard profile, fills matching fields, highlights unanswered questions, learns approved new answers, and enforces a review/CAPTCHA confirmation gate.
 - **Node service:** dependency-free HTTP API, SQLite persistence, salted scrypt password hashes, server-side sessions, AES-256-GCM encrypted profiles/provider tokens, CSRF origin checks, login throttling, security headers, and health checks.
 
 ApplyMate never fills passwords, OTPs, CAPTCHA, financial details, signatures, consent, or demographic declarations. It does not silently submit a form.
@@ -32,9 +32,10 @@ Run validation with `npm run check` and `npm test`.
 1. Open `chrome://extensions`.
 2. Enable **Developer mode**.
 3. Choose **Load unpacked** and select this repository folder.
-4. Open the extension's profile page.
-5. In the web dashboard, open **Connections → Chrome extension** and create a pairing token.
-6. Paste the dashboard URL and pairing token into the extension, then select **Test and sync profile**.
+4. In the web dashboard, open **Connections → Chrome extension** and create a pairing token.
+5. Paste the dashboard URL and pairing token into the one-time browser-agent setup page, then select **Connect and sync profile**.
+6. Open an application form. Known safe fields are filled automatically; unanswered fields are highlighted for you.
+7. Review the form, complete CAPTCHA, and approve any new answers you want ApplyMate to remember before submission.
 
 Creating a new pairing token revokes the previous token.
 

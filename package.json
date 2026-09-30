@@ -11,7 +11,7 @@
     "dev": "node --watch server/index.js",
     "start": "node server/index.js",
     "test": "node --test",
-    "check": "node --check server/index.js && node --check server/db.js && node --check server/security.js && node --check server/google.js && node --check server/resume.js && node --check public/app.js && node --check background.js && node --check options.js && node --check content.js"
+    "check": "node --check server/index.js && node --check server/db.js && node --check server/security.js && node --check server/google.js && node --check server/resume.js && node --check server/profile.js && node --check public/app.js && node --check background.js && node --check options.js && node --check content.js"
   },
   "dependencies": {
     "mammoth": "^1.10.0",

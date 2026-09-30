@@ -13,6 +13,7 @@ import {
   googleConfigured, refreshGoogleToken, scanGmailMessages
 } from "./google.js";
 import { MAX_RESUME_BYTES, parseResumeBuffer } from "./resume.js";
+import { mergeLearnedAnswers, sanitizeLearnedAnswers } from "./profile.js";
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 loadEnv(path.join(root, ".env"));
@@ -183,6 +184,17 @@ async function api(req, res, url) {
     return json(res, 200, { profile: row ? decryptJson(row.encrypted_data, key) : {}, updatedAt: row?.updated_at || null });
   }
 
+  if (url.pathname === "/api/profile/answers" && req.method === "POST") {
+    const answers = sanitizeLearnedAnswers((await readJson(req)).answers);
+    if (!answers.length) return json(res, 400, { error: "No safe new answers were provided." });
+    const row = db.prepare("SELECT encrypted_data FROM profiles WHERE user_id = ?").get(user.id);
+    if (!row) return json(res, 409, { error: "Create your ApplyMate profile before teaching the agent new answers." });
+    const profile = mergeLearnedAnswers(decryptJson(row.encrypted_data, key), answers);
+    db.prepare("UPDATE profiles SET encrypted_data = ?, updated_at = CURRENT_TIMESTAMP WHERE user_id = ?").run(encryptJson(profile, key), user.id);
+    audit(user.id, "profile.answers_learned", `Remembered ${answers.length} approved form answer(s)`, { labels: answers.map((answer) => answer.label) });
+    return json(res, 200, { ok: true, saved: answers.length });
+  }
+
   if (url.pathname === "/api/profile/import" && req.method === "POST") {
     const filename = cleanText(url.searchParams.get("filename") || "resume", 180);
     const contentType = String(req.headers["content-type"] || "").split(";", 1)[0].toLowerCase();
@@ -198,6 +210,9 @@ async function api(req, res, url) {
     const missingFields = PROFILE_FIELDS.filter((field) => !profile[field]);
     if (missingFields.length) return json(res, 400, { error: "Complete all required profile fields before saving.", missingFields });
     if (!["yes", "no"].includes(profile.currentlyWorking)) return json(res, 400, { error: "Choose whether you are currently working." });
+    const existingRow = db.prepare("SELECT encrypted_data FROM profiles WHERE user_id = ?").get(user.id);
+    const existing = existingRow ? decryptJson(existingRow.encrypted_data, key) : {};
+    if (existing.customAnswers) profile.customAnswers = existing.customAnswers;
     const encrypted = encryptJson(profile, key);
     db.prepare(`INSERT INTO profiles (user_id, encrypted_data, updated_at) VALUES (?, ?, CURRENT_TIMESTAMP)
       ON CONFLICT(user_id) DO UPDATE SET encrypted_data = excluded.encrypted_data, updated_at = CURRENT_TIMESTAMP`).run(user.id, encrypted);
@@ -319,6 +334,7 @@ function createSession(res, userId, user) {
 }
 
 function assertSameOrigin(req) {
+  if (String(req.headers.authorization || "").startsWith("Bearer am_")) return;
   const origin = req.headers.origin;
   if (origin && origin !== appOrigin) {
     const error = new Error("Request origin is not allowed.");
