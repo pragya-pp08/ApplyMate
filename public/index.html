@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <meta name="description" content="ApplyMate — your private, human-in-the-loop application agent." />
     <title>ApplyMate</title>
-    <link rel="stylesheet" href="/styles.css?v=12" />
+    <link rel="stylesheet" href="/styles.css?v=13" />
   </head>
   <body>
     <div id="authView" class="auth-shell">
@@ -95,7 +95,10 @@
             <fieldset><legend>Skills and links</legend><div class="field-grid">
               <label class="wide">Skills <span class="required-star" aria-hidden="true">*</span><input name="skills" required /></label><label class="wide">LinkedIn URL <span class="required-star" aria-hidden="true">*</span><input name="linkedin" type="url" required /></label><label class="wide">GitHub URL <span class="required-star" aria-hidden="true">*</span><input name="github" type="url" required /></label><label class="wide">Portfolio URL <span class="required-star" aria-hidden="true">*</span><input name="portfolio" type="url" required /></label>
             </div></fieldset>
-            <div class="profile-actions"><p id="profileFormMessage" role="status"></p><button id="saveProfileButton" class="button primary" type="submit">Save profile</button></div>
+            <section id="profileSaveCard" class="profile-save-card" role="status" hidden>
+              <span id="profileSaveIcon">?</span><div><strong id="profileSaveTitle">Save this profile?</strong><p id="profileSaveText">Check your details once more before saving them for autofill.</p><div id="profileConfirmActions" class="profile-confirm-actions"><button id="cancelProfileSave" class="button secondary" type="button">Keep editing</button><button id="confirmProfileSave" class="button primary" type="button">Yes, save profile</button></div></div>
+            </section>
+            <div class="profile-actions"><button id="backToInboxButton" class="button back-button" type="button">← Back to form inbox</button><p id="profileFormMessage" role="status"></p><button id="saveProfileButton" class="button primary" type="submit">Save profile</button></div>
           </form>
         </section>
 
@@ -132,8 +135,7 @@
       </form>
     </dialog>
 
-    <div id="profileSuccessCard" class="profile-success-card" role="status" hidden><span>✓</span><div><strong>Profile updated</strong><p>Your details are saved and ready for autofill.</p></div></div>
     <div id="toast" role="status"></div>
-    <script src="/app.js?v=12"></script>
+    <script src="/app.js?v=13"></script>
   </body>
 </html>

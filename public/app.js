@@ -129,11 +129,15 @@ async function loadProfile() {
 }
 
 const profileForm = $("#profileForm");
-$("#saveProfileButton").addEventListener("click", () => {
+const saveButton = $("#saveProfileButton");
+let pendingProfile = null;
+saveButton.addEventListener("click", () => {
   const message = $("#profileFormMessage");
   message.textContent = "";
   message.classList.remove("error");
+  hideProfileSaveCard();
 });
+$("#backToInboxButton").addEventListener("click", () => { showView("inbox"); window.scrollTo({ top:0, behavior:"smooth" }); });
 profileForm.addEventListener("invalid", (event) => {
   event.preventDefault();
   const message = $("#profileFormMessage");
@@ -146,37 +150,63 @@ profileForm.addEventListener("invalid", (event) => {
 
 profileForm.addEventListener("submit", async (event) => {
   event.preventDefault();
+  pendingProfile = Object.fromEntries(new FormData(event.currentTarget));
+  showProfileSaveCard("review");
+});
+
+$("#cancelProfileSave").addEventListener("click", () => { pendingProfile = null; hideProfileSaveCard(); });
+$("#confirmProfileSave").addEventListener("click", async () => {
+  if (!pendingProfile) return;
   const message = $("#profileFormMessage");
-  const saveButton = $("#saveProfileButton");
-  message.textContent = "";
-  message.classList.remove("error");
-  const profile = Object.fromEntries(new FormData(event.currentTarget));
-  const confirmed = window.confirm("Please confirm: Have you reviewed all profile details and want to save them to ApplyMate?");
-  if (!confirmed) return;
   saveButton.disabled = true;
   saveButton.textContent = "Saving…";
+  $("#confirmProfileSave").disabled = true;
   try {
-    await api("/api/profile", { method:"PUT", body:JSON.stringify({ profile }) });
+    await api("/api/profile", { method:"PUT", body:JSON.stringify({ profile:pendingProfile }) });
     await loadProfile();
     showView("profile");
-    message.textContent = "Profile updated successfully.";
-    showProfileSuccess();
+    pendingProfile = null;
+    message.textContent = "";
+    showProfileSaveCard("success");
   } catch (error) {
     message.textContent = error.message;
     message.classList.add("error");
+    showProfileSaveCard("error", error.message);
   } finally {
     saveButton.disabled = false;
     saveButton.textContent = "Save profile";
+    $("#confirmProfileSave").disabled = false;
   }
 });
 
-function showProfileSuccess() {
-  const card = $("#profileSuccessCard");
+function showProfileSaveCard(mode, detail = "") {
+  const card = $("#profileSaveCard");
+  const actions = $("#profileConfirmActions");
+  card.className = `profile-save-card ${mode}`;
+  if (mode === "success") {
+    $("#profileSaveIcon").textContent = "✓";
+    $("#profileSaveTitle").textContent = "Profile updated";
+    $("#profileSaveText").textContent = "Your details are saved and ready for autofill.";
+    actions.hidden = true;
+  } else if (mode === "error") {
+    $("#profileSaveIcon").textContent = "!";
+    $("#profileSaveTitle").textContent = "Profile was not saved";
+    $("#profileSaveText").textContent = detail || "Please check your details and try again.";
+    actions.hidden = true;
+  } else {
+    $("#profileSaveIcon").textContent = "?";
+    $("#profileSaveTitle").textContent = "Save this profile?";
+    $("#profileSaveText").textContent = "Check your details once more before saving them for autofill.";
+    actions.hidden = false;
+  }
   card.hidden = false;
-  card.classList.remove("show");
-  requestAnimationFrame(() => card.classList.add("show"));
-  clearTimeout(showProfileSuccess.timer);
-  showProfileSuccess.timer = setTimeout(() => { card.classList.remove("show"); setTimeout(() => { card.hidden = true; }, 220); }, 3200);
+  card.scrollIntoView({ behavior:"smooth", block:"center" });
+}
+
+function hideProfileSaveCard() {
+  const card = $("#profileSaveCard");
+  card.hidden = true;
+  card.className = "profile-save-card";
 }
 
 const resumeLabels = {
