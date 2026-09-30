@@ -1,5 +1,5 @@
 (() => {
-  const AGENT_VERSION = "0.2.2";
+  const AGENT_VERSION = "0.2.3";
   if (window.__applyMateVersion === AGENT_VERSION) return;
   window.__applyMateVersion = AGENT_VERSION;
 
@@ -24,8 +24,8 @@
     ["gpa", ["cgpa", "gpa", "grade point average"]],
     ["tenthPercentage", ["10th percentage", "class 10 percentage", "secondary percentage"]],
     ["twelfthPercentage", ["12th percentage", "class 12 percentage", "higher secondary percentage"]],
-    ["companyName", ["company name", "employer name", "current company", "current employer", "employer"]],
-    ["companyRole", ["company role", "job title", "current role", "designation", "role"]],
+    ["companyName", ["company name", "employer name", "current company", "current employer"]],
+    ["companyRole", ["company role", "job title", "current role", "current job title", "designation"]],
     ["currentlyWorking", ["currently working", "currently employed", "still working", "presently working"]],
     ["employmentDuration", ["employment duration", "work duration", "duration", "employment period"]],
     ["skills", ["technical skills", "key skills", "skills"]],
@@ -35,6 +35,7 @@
   ];
 
   const sensitive = /password|passcode|otp|one.?time|captcha|verification|credit|debit|card number|cvv|bank|aadhaar|aadhar|pan number|social security|signature|gender|race|ethnic|disability|veteran|religion|consent|terms|agree/i;
+  const employmentKeys = new Set(["companyName", "companyRole", "currentlyWorking", "employmentDuration"]);
   let filledFields = new Set();
   let unknownFields = new Map();
   let learnedAnswerBuffer = new Map();
@@ -85,6 +86,17 @@
     });
   }
 
+  function employmentContext(field, label) {
+    if (/current company|current employer|employer name|current job title|currently working|currently employed|employment duration|employment period/.test(label)) return true;
+    let node = field.parentElement;
+    for (let depth = 0; node && depth < 6; depth++, node = node.parentElement) {
+      const heading = node.querySelector(":scope > legend, :scope > h1, :scope > h2, :scope > h3, :scope > [role='heading']")?.innerText || "";
+      const marker = normalize(`${node.getAttribute("aria-label") || ""} ${heading}`);
+      if (/work experience|employment history|professional experience|employment experience|add experience/.test(marker)) return true;
+    }
+    return false;
+  }
+
   function activeFormScope() {
     const dialogs = [...document.querySelectorAll('[role="dialog"], dialog[open], .jobs-easy-apply-modal, .artdeco-modal, [data-test-modal]')].filter((node) => visible(node) && candidateFields(node).length);
     if (dialogs.length) return dialogs.at(-1);
@@ -107,6 +119,7 @@
     let best = null;
     for (const [key, aliases] of rules) {
       if (!profile[key]) continue;
+      if (employmentKeys.has(key) && !employmentContext(field, label)) continue;
       for (const alias of aliases) {
         const exact = label === alias;
         const contained = alias === "name" ? false : label.includes(alias);
@@ -337,7 +350,12 @@
     autoFillTimer = setTimeout(async () => {
       const fields = supportedFields();
       const signature = fields.map((field) => `${field.tagName}:${field.type}:${field.name}:${field.id}:${fieldLabel(field)}`).join("|");
-      if (!signature || signature === lastFormSignature) return;
+      if (!signature) {
+        lastFormSignature = "";
+        document.querySelector("#applymate-hint")?.remove();
+        return;
+      }
+      if (signature === lastFormSignature) return;
       lastFormSignature = signature;
       await autoFillPage();
     }, 350);
