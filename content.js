@@ -1,5 +1,5 @@
 (() => {
-  const AGENT_VERSION = "0.2.4";
+  const AGENT_VERSION = "0.2.5";
   if (window.__applyMateVersion === AGENT_VERSION) return;
   window.__applyMateVersion = AGENT_VERSION;
 
@@ -401,7 +401,7 @@
     clearTimeout(autoFillTimer);
     autoFillTimer = setTimeout(async () => {
       const fields = supportedFields();
-      const signature = fields.map((field) => `${field.tagName}:${field.type}:${field.name}:${field.id}:${fieldLabel(field)}`).join("|");
+      const signature = fields.map((field) => `${field.tagName}:${field.type}:${field.name}:${field.id}:${fieldLabel(field)}:${fieldValue(field)}`).join("|");
       if (!signature) {
         lastFormSignature = "";
         document.querySelector("#applymate-hint")?.remove();

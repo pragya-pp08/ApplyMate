@@ -17,13 +17,8 @@ async function send(type) {
 }
 
 async function ensureInjected(tabId) {
-  try {
-    await chrome.tabs.sendMessage(tabId, { type: "APPLYMATE_PING" });
-    return;
-  } catch {
-    await chrome.scripting.insertCSS({ target: { tabId }, files: ["content.css"] });
-    await chrome.scripting.executeScript({ target: { tabId }, files: ["content.js"] });
-  }
+  await chrome.scripting.insertCSS({ target: { tabId }, files: ["content.css"] }).catch(() => {});
+  await chrome.scripting.executeScript({ target: { tabId }, files: ["content.js"] });
 }
 
 async function init() {

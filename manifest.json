@@ -2,7 +2,7 @@
   "manifest_version": 3,
   "name": "ApplyMate — Personal Application Agent",
   "description": "Fill repetitive application forms from a private profile and review every answer before submitting.",
-  "version": "0.2.4",
+  "version": "0.2.5",
   "permissions": ["activeTab", "storage", "tabs", "scripting"],
   "host_permissions": ["http://*/*", "https://*/*"],
   "content_scripts": [{
