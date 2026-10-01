@@ -7,7 +7,7 @@
     ["fullName", ["full name", "candidate name", "applicant name", "your name"]],
     ["email", ["email address", "e mail", "email"]],
     ["phone", ["mobile phone number", "phone number", "mobile number", "contact number", "telephone", "phone", "mobile"]],
-    ["city", ["current city", "city of residence", "present city", "city"]],
+    ["city", ["current city", "current location", "city of residence", "present city", "city"]],
     ["state", ["current state", "state of residence", "state", "province", "region"]],
     ["country", ["country of residence", "current country", "country"]],
     ["postalCode", ["postal code", "zip code", "pincode", "pin code"]],

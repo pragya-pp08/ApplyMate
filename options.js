@@ -4,6 +4,7 @@ const result = document.querySelector("#connectionResult");
 const connectButton = document.querySelector("#connectButton");
 const autoFill = document.querySelector("#autoFill");
 const captcha = document.querySelector("#requireCaptchaConfirmation");
+let connectionAttempt = 0;
 
 async function load() {
   const { connection = {}, settings = {} } = await chrome.storage.local.get(["connection", "settings"]);
@@ -31,6 +32,7 @@ captcha.addEventListener("change", saveSettings);
 form.serverUrl.addEventListener("input", updateDashboardLink);
 
 async function testConnection(save) {
+  const attempt = ++connectionAttempt;
   const serverUrl = form.serverUrl.value.trim().replace(/\/$/, "");
   const deviceToken = form.deviceToken.value.trim();
   status.textContent = "";
@@ -43,14 +45,19 @@ async function testConnection(save) {
     if (save) await chrome.storage.local.set({ connection: { serverUrl, deviceToken } });
     await saveSettings();
     const trusted = await chrome.runtime.sendMessage({ type:"GET_TRUSTED_PROFILE", connection: save ? { serverUrl, deviceToken } : undefined });
+    if (attempt !== connectionAttempt) return;
     if (trusted.source !== "server") throw new Error(trusted.warning || "Could not connect to ApplyMate.");
     document.querySelector("#resultText").textContent = `${trusted.fieldCount || 0} saved profile answers are ready for autofill.`;
     result.hidden = false;
     connectButton.textContent = "Connected — sync again";
   } catch (error) {
+    if (attempt !== connectionAttempt) return;
+    result.hidden = true;
     status.textContent = error.message || "Could not connect to ApplyMate.";
     connectButton.textContent = "Connect and sync profile";
-  } finally { connectButton.disabled = false; }
+  } finally {
+    if (attempt === connectionAttempt) connectButton.disabled = false;
+  }
 }
 
 load();

@@ -31,6 +31,18 @@ test("home location is never reused as workplace location", () => {
   assert.equal(match.matched, false);
 });
 
+test("Keka experience fields map to the trusted employment profile", () => {
+  const company = engine.matchField({ site:"keka", label:"Company Name", contextKind:"employment" }, profile);
+  const title = engine.matchField({ site:"keka", label:"Job Title", contextKind:"employment" }, profile);
+  assert.equal(company.key, "companyName");
+  assert.equal(title.key, "companyRole");
+});
+
+test("Keka current location maps to personal city outside experience", () => {
+  const location = engine.matchField({ site:"keka", label:"Current Location", contextKind:"general" }, profile);
+  assert.equal(location.key, "city");
+});
+
 test("employment duration is parsed into LinkedIn month and year selects", () => {
   assert.equal(engine.selectKind(["Month", "January", "February", "March", "April", "May", "June", "July", "August"], "From"), "month");
   assert.equal(engine.selectKind(["Year", "2023", "2024", "2025", "2026"], "From"), "year");

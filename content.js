@@ -1,5 +1,5 @@
 (() => {
-  const AGENT_VERSION = "0.3.0";
+  const AGENT_VERSION = "0.3.1";
   if (window.__applyMateVersion === AGENT_VERSION) return;
   window.__applyMateVersion = AGENT_VERSION;
 
@@ -7,7 +7,7 @@
   if (!engine) return;
 
   const sensitive = /password|passcode|otp|one.?time|captcha|verification|credit|debit|card number|cvv|bank|aadhaar|aadhar|pan number|social security|signature|gender|race|ethnic|disability|veteran|religion|consent|terms|agree/i;
-  const site = /(^|\.)linkedin\.com$/i.test(location.hostname) ? "linkedin" : "generic";
+  const site = /(^|\.)linkedin\.com$/i.test(location.hostname) ? "linkedin" : /(^|\.)keka\.com$/i.test(location.hostname) ? "keka" : "generic";
   let cachedSettings = { autoFill:true, requireCaptchaConfirmation:true, blockAutomaticSubmit:true, confidenceThreshold:.72 };
   let profileCache = null;
   let profileCacheAt = 0;
@@ -37,6 +37,19 @@
   function labelParts(field) {
     const parts = [];
     const add = (value) => { const clean = String(value || "").trim(); if (clean && !parts.includes(clean)) parts.push(clean); };
+    if (site === "keka") {
+      const id = String(field.id || "");
+      const mapped = [
+        [/^firstName$/i, "First Name"], [/^middleName$/i, "Middle Name"], [/^lastName$/i, "Last Name"],
+        [/^mobilePhone\.number$/i, "Mobile Phone"], [/^email$/i, "Email"], [/^currentLocation$/i, "Current Location"],
+        [/^companyName_\d+$/i, "Company Name"], [/^designation_\d+$/i, "Job Title"],
+        [/^isCurrentlyWorking_\d+$/i, "Currently working here"], [/^experienceLocation_\d+$/i, "Work Location"],
+        [/^experienceDateOfJoining_\d+$/i, "Date of Joining"], [/^dateOfRelieving_\d+$/i, "Date of Relieving"],
+        [/^skills$/i, "Skills"], [/^currentSalary$/i, "Current Salary"], [/^expectedSalary$/i, "Expected Salary"],
+        [/^availability$/i, "Available To Join"], [/^locationPreference$/i, "Preferred Location"]
+      ].find(([pattern]) => pattern.test(id));
+      if (mapped) add(mapped[1]);
+    }
     add(field.getAttribute("aria-label"));
     const labelledBy = field.getAttribute("aria-labelledby");
     if (labelledBy) labelledBy.split(/\s+/).forEach((id) => add(textOf(document.getElementById(id))));
@@ -83,6 +96,7 @@
     const context = scopeContext(scope);
     let kind = engine.contextKind(context);
     if (site === "linkedin" && /dates of employment|currently work here/i.test(context)) kind = "employment";
+    if (site === "keka" && /^(companyName|designation|isCurrentlyWorking|experienceLocation|experienceDateOfJoining|dateOfRelieving)_\d+$/i.test(field.id || "")) kind = "employment";
     const choiceKind = field.tagName === "SELECT" ? selectKind(field) : "";
     const allOfKind = choiceKind ? fields.filter((candidate) => candidate.tagName === "SELECT" && selectKind(candidate) === choiceKind) : [];
     return {
@@ -144,6 +158,24 @@
     return field.checked === next;
   }
 
+  function valuesEquivalent(key, current, desired) {
+    const left = engine.normalize(current);
+    const right = engine.normalize(desired);
+    if (!left || !right) return left === right;
+    if (key === "phone") {
+      const leftDigits = String(current).replace(/\D/g, "");
+      const rightDigits = String(desired).replace(/\D/g, "");
+      return leftDigits.endsWith(rightDigits) || rightDigits.endsWith(leftDigits);
+    }
+    return left === right;
+  }
+
+  function applyMatch(field, match) {
+    if (field.tagName === "SELECT") return setSelectValue(field, match.value);
+    if (["checkbox", "radio"].includes(field.type)) return setBooleanValue(field, match.value);
+    return setTextValue(field, match.value);
+  }
+
   function markFilled(field, record) {
     field.classList.remove("applymate-needs-input");
     field.classList.add("applymate-filled");
@@ -178,16 +210,18 @@
     const fields = scope ? candidateFields(scope) : [];
     const profile = trusted.profile || {};
     let known = 0;
+    let conflicts = 0;
     const details = fields.map((field) => {
       const info = descriptor(field, scope, fields);
       const match = resolveMatch(field, info, profile);
       if (match.matched) known++;
+      if (match.matched && isAnswered(field) && !valuesEquivalent(match.key, fieldValue(field), match.value)) conflicts++;
       return { label:info.label || "Unlabelled field", matched:Boolean(match.matched), reason:match.reason || "unknown" };
     });
-    return { total:fields.length, known, unknown:fields.length - known, connected:trusted.source === "server", warning:trusted.warning, version:AGENT_VERSION, details };
+    return { total:fields.length, known, unknown:fields.length - known, conflicts, connected:trusted.source === "server", warning:trusted.warning, version:AGENT_VERSION, details };
   }
 
-  async function fill(forceProfile = false) {
+  async function fill(forceProfile = false, replaceConflicts = false) {
     if (filling) {
       rerunRequested = true;
       return { filled:0, unknown:0, complete:0, connected:true, busy:true, version:AGENT_VERSION };
@@ -205,6 +239,8 @@
       let filled = 0;
       let unknown = 0;
       let complete = 0;
+      let conflicts = 0;
+      let replaced = 0;
       const details = [];
       for (const [field] of unknownFields) if (!document.contains(field)) unknownFields.delete(field);
 
@@ -215,12 +251,25 @@
           details.push({ label, status:"protected", reason:"Sensitive or human-verification field" });
           continue;
         }
+        const match = resolveMatch(field, info, profile);
         if (isAnswered(field)) {
-          complete++;
-          details.push({ label, status:"existing", reason:"Already answered; never overwritten" });
+          if (match.matched && !valuesEquivalent(match.key, fieldValue(field), match.value)) {
+            if (replaceConflicts && applyMatch(field, match)) {
+              filled++;
+              replaced++;
+              markFilled(field, { label, value:fieldValue(field) || String(match.value), key:match.key });
+              details.push({ label, status:"replaced", reason:`Replaced conflicting ATS value with ${match.reason}`, key:match.key });
+            } else {
+              conflicts++;
+              field.classList.add("applymate-needs-input");
+              details.push({ label, status:"conflict", reason:"Website value differs from your trusted profile", key:match.key });
+            }
+          } else {
+            complete++;
+            details.push({ label, status:"existing", reason:match.matched ? "Matches your saved profile" : "Existing answer left untouched" });
+          }
           continue;
         }
-        const match = resolveMatch(field, info, profile);
         if (!match.matched || match.score < Number(cachedSettings.confidenceThreshold || .72)) {
           unknown++;
           unknownFields.set(field, { label, initialValue:fieldValue(field), reason:match.reason || "No safe match" });
@@ -229,10 +278,7 @@
           continue;
         }
 
-        let changed = false;
-        if (field.tagName === "SELECT") changed = setSelectValue(field, match.value);
-        else if (["checkbox", "radio"].includes(field.type)) changed = setBooleanValue(field, match.value);
-        else changed = setTextValue(field, match.value);
+        const changed = applyMatch(field, match);
         if (changed) {
           filled++;
           markFilled(field, { label, value:fieldValue(field) || String(match.value), key:match.key });
@@ -244,8 +290,8 @@
           details.push({ label, status:"needs-user", reason:"Website rejected the proposed value" });
         }
       }
-      showAgentHint(filled, unknown, complete);
-      return { filled, unknown, complete, total:fields.length, connected:true, version:AGENT_VERSION, details };
+      showAgentHint(filled, unknown, complete, conflicts);
+      return { filled, replaced, unknown, complete, conflicts, total:fields.length, connected:true, version:AGENT_VERSION, details };
     } finally {
       filling = false;
       if (rerunRequested) {
@@ -255,14 +301,14 @@
     }
   }
 
-  function showAgentHint(filled, unknown, complete = 0) {
+  function showAgentHint(filled, unknown, complete = 0, conflicts = 0) {
     document.querySelector("#applymate-hint")?.remove();
     const hint = document.createElement("button");
     hint.id = "applymate-hint";
     hint.type = "button";
-    const summary = filled ? `${filled} filled · ${unknown} need you` : unknown ? `${complete} complete · ${unknown} need you` : "Current step is complete";
+    const summary = filled ? `${filled} filled · ${unknown} need you` : conflicts ? `${conflicts} conflict${conflicts === 1 ? "" : "s"} · click to fix` : unknown ? `${complete} complete · ${unknown} need you` : "Current step is complete";
     hint.innerHTML = `<strong>ApplyMate <small>v${AGENT_VERSION}</small></strong><span>${summary}</span>`;
-    hint.addEventListener("click", () => fill(true));
+    hint.addEventListener("click", () => fill(true, true));
     document.documentElement.appendChild(hint);
   }
 
@@ -374,7 +420,7 @@
   chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
     if (message?.type === "APPLYMATE_PING") sendResponse({ ok:true, version:AGENT_VERSION });
     else if (message?.type === "APPLYMATE_SCAN") scan(true).then(sendResponse).catch((error) => sendResponse({ connected:false, warning:error.message, version:AGENT_VERSION }));
-    else if (message?.type === "APPLYMATE_FILL") fill(true).then(sendResponse).catch((error) => sendResponse({ connected:false, warning:error.message, version:AGENT_VERSION }));
+    else if (message?.type === "APPLYMATE_FILL") fill(true, Boolean(message.replaceConflicts)).then(sendResponse).catch((error) => sendResponse({ connected:false, warning:error.message, version:AGENT_VERSION }));
     else if (message?.type === "APPLYMATE_REVIEW") showReview().then(() => sendResponse({ ok:true, version:AGENT_VERSION }));
     else return false;
     return true;

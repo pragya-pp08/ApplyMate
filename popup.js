@@ -10,11 +10,11 @@ async function activeTab() {
   return tab;
 }
 
-async function send(type) {
+async function send(type, payload = {}) {
   const tab = await activeTab();
   if (!tab?.id) throw new Error("No active page found.");
   await ensureInjected(tab.id);
-  return chrome.tabs.sendMessage(tab.id, { type });
+  return chrome.tabs.sendMessage(tab.id, { type, ...payload });
 }
 
 async function ensureInjected(tabId) {
@@ -38,7 +38,7 @@ async function init() {
     document.querySelector("#unknownCount").textContent = result.unknown;
     fillButton.disabled = result.total === 0;
     reviewButton.disabled = result.total === 0;
-    status.textContent = result.total ? `Agent v${result.version || chrome.runtime.getManifest().version} is ready. It found ${result.known} safe match${result.known === 1 ? "" : "es"}.` : "No supported form fields found.";
+    status.textContent = result.total ? `Agent v${result.version || chrome.runtime.getManifest().version} found ${result.known} safe match${result.known === 1 ? "" : "es"}${result.conflicts ? ` and ${result.conflicts} conflicting website value${result.conflicts === 1 ? "" : "s"}` : ""}.` : "No supported form fields found.";
   } catch {
     pageTitle.textContent = "This page cannot be accessed";
     pageHost.textContent = "Try opening an application form in a normal tab.";
@@ -50,9 +50,9 @@ fillButton.addEventListener("click", async () => {
   fillButton.disabled = true;
   status.textContent = "Matching your saved answers…";
   try {
-    const result = await send("APPLYMATE_FILL");
+    const result = await send("APPLYMATE_FILL", { replaceConflicts:true });
     if (!result.connected) throw new Error(result.warning || "ApplyMate is not connected to your dashboard.");
-    status.textContent = `Agent v${result.version || chrome.runtime.getManifest().version}: filled ${result.filled}; ${result.complete || 0} already complete; ${result.unknown} need you.`;
+    status.textContent = `Agent v${result.version || chrome.runtime.getManifest().version}: filled ${result.filled}; replaced ${result.replaced || 0} conflict${result.replaced === 1 ? "" : "s"}; ${result.unknown} need you.`;
     document.querySelector("#knownCount").textContent = result.filled;
     document.querySelector("#unknownCount").textContent = result.unknown;
     if (result.filled > 0) setTimeout(() => window.close(), 900);
