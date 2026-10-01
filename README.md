@@ -27,15 +27,21 @@ Requirements: Node.js 24 or newer.
 
 Run validation with `npm run check` and `npm test`.
 
-## Install the Chrome extension locally
+## Install the browser agent locally
 
-1. Open `chrome://extensions`.
+1. Open `edge://extensions` in Microsoft Edge or `chrome://extensions` in Chrome.
 2. Enable **Developer mode**.
 3. Choose **Load unpacked** and select this repository folder.
 4. In the web dashboard, open **Connections → Chrome extension** and create a pairing token.
 5. Paste the dashboard URL and pairing token into the one-time browser-agent setup page, then select **Connect and sync profile**.
 6. Open an application form. Known safe fields are filled automatically; unanswered fields are highlighted for you.
 7. Review the form, complete CAPTCHA, and approve any new answers you want ApplyMate to remember before submission.
+
+The popup and the on-page status card display the running agent version. After changing extension files, select **Reload** on the browser's Extensions page and confirm the displayed version before testing.
+
+### Autofill engine
+
+Version 0.3 separates semantic field matching from browser DOM control. It includes a dedicated LinkedIn Easy Apply adapter, React-compatible input updates, dynamic multi-step rescanning, employment-duration parsing, non-overwrite protection, and explicit reasons for fields that require the applicant. Reusable matching behavior is covered by automated tests.
 
 Creating a new pairing token revokes the previous token.
 

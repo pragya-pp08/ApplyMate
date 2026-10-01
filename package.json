@@ -1,6 +1,6 @@
 {
   "name": "applymate",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "private": true,
   "type": "module",
   "description": "A human-in-the-loop personal application agent.",
@@ -11,7 +11,7 @@
     "dev": "node --watch server/index.js",
     "start": "node server/index.js",
     "test": "node --test",
-    "check": "node --check server/index.js && node --check server/db.js && node --check server/security.js && node --check server/google.js && node --check server/resume.js && node --check server/profile.js && node --check public/app.js && node --check background.js && node --check options.js && node --check content.js"
+    "check": "node --check server/index.js && node --check server/db.js && node --check server/security.js && node --check server/google.js && node --check server/resume.js && node --check server/profile.js && node --check public/app.js && node --check form-engine.js && node --check background.js && node --check options.js && node --check content.js"
   },
   "dependencies": {
     "mammoth": "^1.10.0",

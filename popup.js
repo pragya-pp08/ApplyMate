@@ -19,7 +19,7 @@ async function send(type) {
 
 async function ensureInjected(tabId) {
   await chrome.scripting.insertCSS({ target: { tabId }, files: ["content.css"] }).catch(() => {});
-  await chrome.scripting.executeScript({ target: { tabId }, files: ["content.js"] });
+  await chrome.scripting.executeScript({ target: { tabId }, files: ["form-engine.js", "content.js"] });
 }
 
 async function init() {
@@ -38,7 +38,7 @@ async function init() {
     document.querySelector("#unknownCount").textContent = result.unknown;
     fillButton.disabled = result.total === 0;
     reviewButton.disabled = result.total === 0;
-    status.textContent = result.total ? "Your saved answers are synced. Known fields are filled automatically." : "No supported form fields found.";
+    status.textContent = result.total ? `Agent v${result.version || chrome.runtime.getManifest().version} is ready. It found ${result.known} safe match${result.known === 1 ? "" : "es"}.` : "No supported form fields found.";
   } catch {
     pageTitle.textContent = "This page cannot be accessed";
     pageHost.textContent = "Try opening an application form in a normal tab.";
@@ -52,7 +52,7 @@ fillButton.addEventListener("click", async () => {
   try {
     const result = await send("APPLYMATE_FILL");
     if (!result.connected) throw new Error(result.warning || "ApplyMate is not connected to your dashboard.");
-    status.textContent = `Filled ${result.filled} field${result.filled === 1 ? "" : "s"}. ${result.unknown} still need you.`;
+    status.textContent = `Agent v${result.version || chrome.runtime.getManifest().version}: filled ${result.filled}; ${result.complete || 0} already complete; ${result.unknown} need you.`;
     document.querySelector("#knownCount").textContent = result.filled;
     document.querySelector("#unknownCount").textContent = result.unknown;
     if (result.filled > 0) setTimeout(() => window.close(), 900);

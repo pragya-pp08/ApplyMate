@@ -72,6 +72,6 @@ async function installAgentInOpenTabs() {
   const tabs = await chrome.tabs.query({ url:["http://*/*", "https://*/*"] });
   await Promise.allSettled(tabs.filter((tab) => tab.id).map(async (tab) => {
     await chrome.scripting.insertCSS({ target:{ tabId:tab.id }, files:["content.css"] });
-    await chrome.scripting.executeScript({ target:{ tabId:tab.id }, files:["content.js"] });
+    await chrome.scripting.executeScript({ target:{ tabId:tab.id }, files:["form-engine.js", "content.js"] });
   }));
 }
