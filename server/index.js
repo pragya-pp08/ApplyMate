@@ -459,7 +459,7 @@ function serveStatic(req, res, pathname) {
   const types = { ".html": "text/html; charset=utf-8", ".css": "text/css; charset=utf-8", ".js": "text/javascript; charset=utf-8", ".svg": "image/svg+xml", ".png": "image/png" };
   res.statusCode = 200;
   res.setHeader("Content-Type", types[path.extname(file)] || "application/octet-stream");
-  res.setHeader("Cache-Control", path.extname(file) === ".html" ? "no-cache" : "public, max-age=3600");
+  res.setHeader("Cache-Control", !isProduction || path.extname(file) === ".html" ? "no-cache" : "public, max-age=3600");
   if (req.method === "HEAD") return res.end();
   fs.createReadStream(file).pipe(res);
 }
