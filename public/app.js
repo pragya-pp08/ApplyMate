@@ -34,6 +34,7 @@ $("#authToggle").addEventListener("click", () => {
   state.register = !state.register;
   $("#nameField").hidden = !state.register;
   $("#nameField input").required = state.register;
+  $("#authForm input[name='password']").autocomplete = state.register ? "new-password" : "current-password";
   $("#authTitle").textContent = state.register ? "Create your account" : "Welcome back";
   $("#authSubtitle").textContent = state.register ? "Start saving your applications." : "Sign in to continue.";
   $("#authForm button").textContent = state.register ? "Create account" : "Sign in";
