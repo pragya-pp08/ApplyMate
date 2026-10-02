@@ -25,6 +25,11 @@ async function bootstrap() {
   } catch {
     $("#authView").hidden = false;
     $("#appView").hidden = true;
+    const rememberedEmail = localStorage.getItem("applymateRememberedEmail");
+    if (rememberedEmail) {
+      $("#authForm input[name='email']").value = rememberedEmail;
+      $("#authForm input[name='rememberMe']").checked = true;
+    }
   }
 }
 
@@ -71,6 +76,7 @@ $("#authToggle").addEventListener("click", () => {
   state.register = !state.register;
   $("#nameField").hidden = !state.register;
   $("#nameField input").required = state.register;
+  $("#rememberMeField").hidden = state.register;
   $("#authForm input[name='password']").autocomplete = state.register ? "new-password" : "current-password";
   $("#authTitle").textContent = state.register ? "Create your account" : "Welcome back";
   $("#authSubtitle").textContent = state.register ? "Start saving your applications." : "Sign in to continue.";
@@ -131,6 +137,8 @@ $("#authForm").addEventListener("submit", async (event) => {
   const values = Object.fromEntries(new FormData(event.currentTarget));
   try {
     const { user } = await api(state.register ? "/api/auth/register" : "/api/auth/login", { method: "POST", body: JSON.stringify(values) });
+    if (!state.register && values.rememberMe) localStorage.setItem("applymateRememberedEmail", values.email);
+    else if (!state.register) localStorage.removeItem("applymateRememberedEmail");
     enterApp(user);
     await Promise.all([loadApplications(), loadProfile()]);
     showView(initialView);

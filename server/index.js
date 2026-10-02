@@ -88,7 +88,7 @@ async function api(req, res, url) {
       return json(res, 401, { error: "Email or password is incorrect." });
     }
     loginAttempts.delete(attemptKey);
-    return createSession(res, user.id, { id: user.id, name: user.name, email: user.email });
+    return createSession(res, user.id, { id: user.id, name: user.name, email: user.email }, body.rememberMe ? 90 : sessionDays);
   }
 
   if (url.pathname === "/api/auth/forgot-password" && req.method === "POST") {
@@ -365,11 +365,11 @@ function authenticatedUser(req) {
     WHERE sessions.token_hash = ? AND sessions.expires_at > ?`).get(tokenHash(token), new Date().toISOString()) || null;
 }
 
-function createSession(res, userId, user) {
+function createSession(res, userId, user, days = sessionDays) {
   const token = newToken();
-  const expires = new Date(Date.now() + sessionDays * 86400000);
+  const expires = new Date(Date.now() + days * 86400000);
   db.prepare("INSERT INTO sessions (token_hash, user_id, expires_at) VALUES (?, ?, ?)").run(tokenHash(token), userId, expires.toISOString());
-  res.setHeader("Set-Cookie", sessionCookie(token, { secure: isProduction, maxAge: sessionDays * 86400 }));
+  res.setHeader("Set-Cookie", sessionCookie(token, { secure: isProduction, maxAge: days * 86400 }));
   return json(res, 201, { user });
 }
 
