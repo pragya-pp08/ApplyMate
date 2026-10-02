@@ -83,7 +83,14 @@ export function extractProfileFromText(rawText) {
   }
 
   const collegeLine = lines.find((line) => /\b(university|college|institute of technology|institute|school of engineering)\b/i.test(line) && line.length <= 180);
-  if (collegeLine) profile.college = tidyValue(collegeLine.replace(/^(education|university|college)\s*[:|-]\s*/i, ""), 180);
+  if (collegeLine) {
+    const college = tidyValue(collegeLine
+      .replace(/^(education|university|college)\s*[:|-]\s*/i, "")
+      .replace(/\s+(?:jan(?:uary)?|feb(?:ruary)?|mar(?:ch)?|apr(?:il)?|may|jun(?:e)?|jul(?:y)?|aug(?:ust)?|sep(?:t(?:ember)?)?|oct(?:ober)?|nov(?:ember)?|dec(?:ember)?)\.?\s+(?:19|20)\d{2}\b.*$/i, ""), 180);
+    if (college) profile.college = college;
+    const possibleCity = college.split(",").at(-1)?.trim();
+    if (possibleCity && possibleCity !== college && /^[A-Za-z .'-]{2,50}$/.test(possibleCity)) profile.collegeCity = possibleCity;
+  }
 
   const degreeMatch = text.match(/\b(B\.?\s?Tech|M\.?\s?Tech|B\.?\s?E\.?|M\.?\s?E\.?|BCA|MCA|BBA|MBA|Bachelor(?:'s)?(?:\s+of)?\s+[A-Za-z ]{2,35}|Master(?:'s)?(?:\s+of)?\s+[A-Za-z ]{2,35})\b/i);
   if (degreeMatch) profile.degree = tidyValue(degreeMatch[0], 100);

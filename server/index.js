@@ -410,7 +410,7 @@ async function readBuffer(req, maxBytes) {
   return Buffer.concat(chunks);
 }
 
-const PROFILE_FIELDS = ["firstName","middleName","lastName","fullName","email","phone","city","state","country","postalCode","dateOfBirth","gender","experienceYears","experienceMonths","currentSalary","expectedSalary","availableToJoin","preferredLocation","college","collegeAddress","collegeCity","collegeState","collegeCountry","degree","fieldOfStudy","graduationYear","gpa","tenthPercentage","twelfthPercentage","companyName","companyRole","currentlyWorking","employmentDuration","employmentStartDate","employmentEndDate","workLocation","experienceDescription","skills","linkedin","github","portfolio"];
+const PROFILE_FIELDS = ["firstName","middleName","lastName","fullName","email","phone","city","state","country","postalCode","dateOfBirth","gender","experienceYears","experienceMonths","currentSalary","expectedSalary","availableToJoin","preferredLocation","college","collegeAddress","collegeCity","collegeState","collegeCountry","degree","fieldOfStudy","educationStartDate","educationEndDate","graduationYear","gpa","tenthPercentage","twelfthPercentage","companyName","companyRole","currentlyWorking","employmentDuration","employmentStartDate","employmentEndDate","workLocation","experienceDescription","skills","linkedin","github","portfolio"];
 const REQUIRED_PROFILE_FIELDS = ["firstName","lastName","fullName","email","phone","city","state","country","postalCode","college","collegeAddress","collegeCity","collegeState","collegeCountry","degree","fieldOfStudy","graduationYear","gpa","tenthPercentage","twelfthPercentage","companyName","companyRole","currentlyWorking","employmentDuration","skills","linkedin","github","portfolio"];
 
 function sanitizeProfile(value) {

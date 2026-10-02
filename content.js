@@ -1,5 +1,5 @@
 (() => {
-  const AGENT_VERSION = "0.4.1";
+  const AGENT_VERSION = "0.4.2";
   if (window.__applyMateVersion === AGENT_VERSION) return;
   window.__applyMateVersion = AGENT_VERSION;
 
@@ -49,7 +49,7 @@
         [/^experienceDateOfJoining_\d+$/i, "Date of Joining"], [/^dateOfRelieving_\d+$/i, "Date of Relieving"],
         [/^degree_\d+$/i, "Degree"], [/^branch_\d+$/i, "Field of Study"],
         [/^university_\d+$/i, "College Name"], [/^educationLocation_\d+$/i, "College City"],
-        [/^educationDateOfJoining_\d+$/i, "Education Start Date"], [/^dateOfCompletion_\d+$/i, "Education Completion Date"],
+        [/^educationDateOfJoining_\d+$/i, "Education Start Date"], [/^dateOfCompletion_\d+$/i, "Education End Date"],
         [/^skills$/i, "Skills"], [/^gender$/i, "Gender"], [/^(dateOfBirth|dob)$/i, "Date of Birth"],
         [/^currentSalary$/i, "Current Salary"], [/^expectedSalary$/i, "Expected Salary"],
         [/^availability$/i, "Available To Join"], [/^locationPreference$/i, "Preferred Location"],
@@ -76,7 +76,7 @@
     return [...root.querySelectorAll("input, textarea, select")].filter((field) => {
       const type = String(field.type || "").toLowerCase();
       const kekaIdentity = `${field.id || ""} ${field.name || ""}`;
-      const supportedKekaDate = site === "keka" && /(?:dateOfBirth|experienceDateOfJoining_\d+|dateOfRelieving_\d+)/i.test(kekaIdentity);
+      const supportedKekaDate = site === "keka" && /(?:dateOfBirth|experienceDateOfJoining_\d+|dateOfRelieving_\d+|educationDateOfJoining_\d+|dateOfCompletion_\d+)/i.test(kekaIdentity);
       if (!visible(field) || field.disabled || (field.readOnly && !supportedKekaDate)) return false;
       if (["hidden", "password", "submit", "button", "reset", "file", "image"].includes(type)) return false;
       if (["checkbox", "radio"].includes(type)) return Boolean(fieldLabel(field));
@@ -174,7 +174,7 @@
     const left = engine.normalize(current);
     const right = engine.normalize(desired);
     if (!left || !right) return left === right;
-    if (["dateOfBirth", "employmentStartDate", "employmentEndDate"].includes(key)) {
+    if (["dateOfBirth", "employmentStartDate", "employmentEndDate", "educationStartDate", "educationEndDate"].includes(key)) {
       const canonicalDate = (value) => {
         const text = String(value || "").trim();
         const iso = text.match(/^(\d{4})-(\d{2})-(\d{2})$/);
@@ -202,7 +202,7 @@
   }
 
   function applyMatch(field, match) {
-    if (["employmentStartDate", "employmentEndDate", "dateOfBirth"].includes(match.key)) {
+    if (["employmentStartDate", "employmentEndDate", "educationStartDate", "educationEndDate", "dateOfBirth"].includes(match.key)) {
       const iso = String(match.value || "").match(/^\d{4}-\d{2}-\d{2}$/)?.[0];
       if (iso && field.type !== "date") {
         const [year, month, day] = iso.split("-").map(Number);

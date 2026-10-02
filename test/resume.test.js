@@ -37,3 +37,9 @@ test("extracts reusable profile fields from resume text", () => {
 test("does not invent fields from sparse text", () => {
   assert.deepEqual(extractProfileFromText("Resume\nAvailable on request"), {});
 });
+
+test("college extraction does not include an adjacent course date", () => {
+  const profile = extractProfileFromText("EDUCATION\nVellore Institute of Technology, Bhopal Sep 2023 - Jun 2027\nB.Tech Computer Science");
+  assert.equal(profile.college, "Vellore Institute of Technology, Bhopal");
+  assert.equal(profile.collegeCity, "Bhopal");
+});

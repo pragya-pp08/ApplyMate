@@ -62,11 +62,20 @@ test("Keka application defaults map to explicitly saved profile answers", () => 
 });
 
 test("Keka education fields use saved education details", () => {
-  const educationProfile = { college:"VIT Bhopal", degree:"B.Tech", fieldOfStudy:"Computer Science", collegeCity:"Bhopal" };
+  const educationProfile = { college:"VIT Bhopal", degree:"B.Tech", fieldOfStudy:"Computer Science", collegeCity:"Bhopal", educationStartDate:"2023-09-01", educationEndDate:"2027-06-30" };
   assert.equal(engine.matchField({ site:"keka", label:"College Name", contextKind:"education" }, educationProfile).key, "college");
   assert.equal(engine.matchField({ site:"keka", label:"Degree", contextKind:"education" }, educationProfile).key, "degree");
   assert.equal(engine.matchField({ site:"keka", label:"Field of Study", contextKind:"education" }, educationProfile).key, "fieldOfStudy");
   assert.equal(engine.matchField({ site:"keka", label:"College City", contextKind:"education" }, educationProfile).key, "collegeCity");
+  assert.equal(engine.matchField({ site:"keka", label:"Education Start Date", contextKind:"education" }, educationProfile).key, "educationStartDate");
+  assert.equal(engine.matchField({ site:"keka", label:"Education End Date", contextKind:"education" }, educationProfile).key, "educationEndDate");
+});
+
+test("specific college city label wins over the general college alias", () => {
+  const educationProfile = { college:"VIT Bhopal", collegeCity:"Bhopal" };
+  const match = engine.matchField({ site:"keka", label:"College City", hints:"EducationDetails[0].location", contextKind:"education" }, educationProfile);
+  assert.equal(match.key, "collegeCity");
+  assert.equal(match.value, "Bhopal");
 });
 
 test("total experience can be derived from saved employment dates", () => {

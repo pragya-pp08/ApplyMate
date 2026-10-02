@@ -27,6 +27,8 @@
     ["collegeCountry", ["college country", "university country", "institute country", "campus country"]],
     ["degree", ["highest degree", "qualification", "degree"]],
     ["fieldOfStudy", ["field of study", "specialization", "major", "branch"]],
+    ["educationStartDate", ["education start date", "start of course", "course start date", "admission date"]],
+    ["educationEndDate", ["education end date", "end of course", "course end date", "completion date"]],
     ["graduationYear", ["graduation year", "year of graduation", "passing year", "year of passing"]],
     ["gpa", ["cgpa", "gpa", "grade point average"]],
     ["tenthPercentage", ["10th percentage", "class 10 percentage", "secondary percentage"]],
@@ -115,7 +117,7 @@
       if (EMPLOYMENT_KEYS.has(key) && kind !== "employment" && !/^current (?:company|employer|job title|role)\b/.test(label)) continue;
       if (LOCATION_KEYS.has(key) && kind === "employment") continue;
       for (const alias of aliases) {
-        const score = aliasScore(searchable, alias);
+        const score = Math.max(aliasScore(label, alias), aliasScore(searchable, alias) * .97);
         if (score && (!best || score > best.score)) best = { matched:true, key, value, score, reason:`profile:${key}` };
       }
     }
