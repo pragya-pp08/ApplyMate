@@ -75,6 +75,25 @@
     return 0;
   }
 
+  function derivedExperience(profile = {}) {
+    const parseDate = (value, end = false) => {
+      const text = String(value || "").trim();
+      if (!text) return null;
+      const iso = text.match(/^(\d{4})-(\d{2})(?:-(\d{2}))?$/);
+      if (iso) return new Date(Date.UTC(Number(iso[1]), Number(iso[2]) - 1, Number(iso[3] || (end ? 28 : 1))));
+      const parsed = parseEmploymentDuration(text);
+      const part = end ? parsed.end : parsed.start;
+      if (!part.year || !part.month) return null;
+      return new Date(Date.UTC(Number(part.year), MONTHS.indexOf(part.month), 1));
+    };
+    const start = parseDate(profile.employmentStartDate || profile.employmentDuration);
+    const current = /^(yes|true|present|current)$/i.test(String(profile.currentlyWorking || "").trim());
+    const end = current ? new Date() : parseDate(profile.employmentEndDate || profile.employmentDuration, true);
+    if (!start || !end || end < start) return null;
+    const months = Math.max(0, (end.getUTCFullYear() - start.getUTCFullYear()) * 12 + end.getUTCMonth() - start.getUTCMonth());
+    return { years:String(Math.floor(months / 12)), months:String(months % 12) };
+  }
+
   function matchField(descriptor, profile = {}) {
     const label = normalize(descriptor.label);
     const searchable = normalize(`${descriptor.label || ""} ${descriptor.hints || ""}`);
@@ -88,12 +107,16 @@
 
     let best = null;
     for (const [key, aliases] of RULES) {
-      if (!String(profile[key] || "").trim()) continue;
+      let value = profile[key];
+      if (!String(value ?? "").trim() && ["experienceYears", "experienceMonths"].includes(key)) {
+        value = derivedExperience(profile)?.[key === "experienceYears" ? "years" : "months"];
+      }
+      if (!String(value ?? "").trim()) continue;
       if (EMPLOYMENT_KEYS.has(key) && kind !== "employment" && !/^current (?:company|employer|job title|role)\b/.test(label)) continue;
       if (LOCATION_KEYS.has(key) && kind === "employment") continue;
       for (const alias of aliases) {
         const score = aliasScore(searchable, alias);
-        if (score && (!best || score > best.score)) best = { matched:true, key, value:profile[key], score, reason:`profile:${key}` };
+        if (score && (!best || score > best.score)) best = { matched:true, key, value, score, reason:`profile:${key}` };
       }
     }
 
@@ -123,5 +146,5 @@
     return part[kind] || "";
   }
 
-  root.ApplyMateEngine = Object.freeze({ MONTHS, normalize, contextKind, parseEmploymentDuration, matchField, selectKind, employmentDateValue });
+  root.ApplyMateEngine = Object.freeze({ MONTHS, normalize, contextKind, parseEmploymentDuration, derivedExperience, matchField, selectKind, employmentDateValue });
 })(globalThis);

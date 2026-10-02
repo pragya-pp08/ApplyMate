@@ -61,6 +61,22 @@ test("Keka application defaults map to explicitly saved profile answers", () => 
   assert.equal(engine.matchField({ site:"keka", label:"Gender", contextKind:"general" }, profile).key, "gender");
 });
 
+test("Keka education fields use saved education details", () => {
+  const educationProfile = { college:"VIT Bhopal", degree:"B.Tech", fieldOfStudy:"Computer Science", collegeCity:"Bhopal" };
+  assert.equal(engine.matchField({ site:"keka", label:"College Name", contextKind:"education" }, educationProfile).key, "college");
+  assert.equal(engine.matchField({ site:"keka", label:"Degree", contextKind:"education" }, educationProfile).key, "degree");
+  assert.equal(engine.matchField({ site:"keka", label:"Field of Study", contextKind:"education" }, educationProfile).key, "fieldOfStudy");
+  assert.equal(engine.matchField({ site:"keka", label:"College City", contextKind:"education" }, educationProfile).key, "collegeCity");
+});
+
+test("total experience can be derived from saved employment dates", () => {
+  const datedProfile = { employmentStartDate:"2024-01-10", employmentEndDate:"2025-08-20", currentlyWorking:"no" };
+  assert.equal(engine.derivedExperience(datedProfile).years, "1");
+  assert.equal(engine.derivedExperience(datedProfile).months, "7");
+  assert.equal(engine.matchField({ site:"keka", label:"Total Experience Years", contextKind:"general" }, datedProfile).value, "1");
+  assert.equal(engine.matchField({ site:"keka", label:"Total Experience Months", contextKind:"general" }, datedProfile).value, "7");
+});
+
 test("structured employment details stay inside employment context", () => {
   assert.equal(engine.matchField({ site:"keka", label:"Date of Joining", contextKind:"employment" }, profile).key, "employmentStartDate");
   assert.equal(engine.matchField({ site:"keka", label:"Work Location", contextKind:"employment" }, profile).key, "workLocation");

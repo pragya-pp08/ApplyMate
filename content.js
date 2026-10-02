@@ -1,5 +1,5 @@
 (() => {
-  const AGENT_VERSION = "0.4.0";
+  const AGENT_VERSION = "0.4.1";
   if (window.__applyMateVersion === AGENT_VERSION) return;
   window.__applyMateVersion = AGENT_VERSION;
 
@@ -40,18 +40,22 @@
     const add = (value) => { const clean = String(value || "").trim(); if (clean && !parts.includes(clean)) parts.push(clean); };
     if (site === "keka") {
       const id = String(field.id || "");
+      const identity = `${id} ${String(field.name || "")}`.trim();
       const mapped = [
         [/^firstName$/i, "First Name"], [/^middleName$/i, "Middle Name"], [/^lastName$/i, "Last Name"],
-        [/^mobilePhone\.number$/i, "Mobile Phone"], [/^email$/i, "Email"], [/^currentLocation$/i, "Current Location"],
+        [/mobilePhone\.countryCode/i, "Phone Country Code"], [/mobilePhone\.number/i, "Mobile Phone"], [/^email$/i, "Email"], [/currentLocation/i, "Current Location"],
         [/^companyName_\d+$/i, "Company Name"], [/^designation_\d+$/i, "Job Title"],
         [/^isCurrentlyWorking_\d+$/i, "Currently working here"], [/^experienceLocation_\d+$/i, "Work Location"],
         [/^experienceDateOfJoining_\d+$/i, "Date of Joining"], [/^dateOfRelieving_\d+$/i, "Date of Relieving"],
+        [/^degree_\d+$/i, "Degree"], [/^branch_\d+$/i, "Field of Study"],
+        [/^university_\d+$/i, "College Name"], [/^educationLocation_\d+$/i, "College City"],
+        [/^educationDateOfJoining_\d+$/i, "Education Start Date"], [/^dateOfCompletion_\d+$/i, "Education Completion Date"],
         [/^skills$/i, "Skills"], [/^gender$/i, "Gender"], [/^(dateOfBirth|dob)$/i, "Date of Birth"],
         [/^currentSalary$/i, "Current Salary"], [/^expectedSalary$/i, "Expected Salary"],
         [/^availability$/i, "Available To Join"], [/^locationPreference$/i, "Preferred Location"],
-        [/^(workExperience\.)?years$/i, "Total Experience Years"], [/^(workExperience\.)?months$/i, "Total Experience Months"],
+        [/^(workExperience|workExperience\.years)$/i, "Total Experience Years"], [/^workExperience\.months$/i, "Total Experience Months"],
         [/^workExperienceYears$/i, "Total Experience Years"], [/^workExperienceMonths$/i, "Total Experience Months"]
-      ].find(([pattern]) => pattern.test(id));
+      ].find(([pattern]) => pattern.test(id) || pattern.test(identity));
       if (mapped) add(mapped[1]);
     }
     add(field.getAttribute("aria-label"));
@@ -71,7 +75,9 @@
   function candidateFields(root) {
     return [...root.querySelectorAll("input, textarea, select")].filter((field) => {
       const type = String(field.type || "").toLowerCase();
-      if (!visible(field) || field.disabled || field.readOnly) return false;
+      const kekaIdentity = `${field.id || ""} ${field.name || ""}`;
+      const supportedKekaDate = site === "keka" && /(?:dateOfBirth|experienceDateOfJoining_\d+|dateOfRelieving_\d+)/i.test(kekaIdentity);
+      if (!visible(field) || field.disabled || (field.readOnly && !supportedKekaDate)) return false;
       if (["hidden", "password", "submit", "button", "reset", "file", "image"].includes(type)) return false;
       if (["checkbox", "radio"].includes(type)) return Boolean(fieldLabel(field));
       return true;
@@ -100,7 +106,9 @@
     const context = scopeContext(scope);
     let kind = engine.contextKind(context);
     if (site === "linkedin" && /dates of employment|currently work here/i.test(context)) kind = "employment";
-    if (site === "keka" && /^(companyName|designation|isCurrentlyWorking|experienceLocation|experienceDateOfJoining|dateOfRelieving)_\d+$/i.test(field.id || "")) kind = "employment";
+    const identity = `${field.id || ""} ${field.name || ""}`;
+    if (site === "keka" && /(?:companyName|designation|isCurrentlyWorking|experienceLocation|experienceDateOfJoining|dateOfRelieving)_\d+|ExperienceDetails\[/i.test(identity)) kind = "employment";
+    if (site === "keka" && /(?:degree|branch|university|educationLocation|educationDateOfJoining|dateOfCompletion)_\d+|EducationDetails\[/i.test(identity)) kind = "education";
     const choiceKind = field.tagName === "SELECT" ? selectKind(field) : "";
     const allOfKind = choiceKind ? fields.filter((candidate) => candidate.tagName === "SELECT" && selectKind(candidate) === choiceKind) : [];
     return {
@@ -166,6 +174,25 @@
     const left = engine.normalize(current);
     const right = engine.normalize(desired);
     if (!left || !right) return left === right;
+    if (["dateOfBirth", "employmentStartDate", "employmentEndDate"].includes(key)) {
+      const canonicalDate = (value) => {
+        const text = String(value || "").trim();
+        const iso = text.match(/^(\d{4})-(\d{2})-(\d{2})$/);
+        if (iso) return `${iso[1]}-${iso[2]}-${iso[3]}`;
+        const parsed = new Date(text);
+        if (Number.isNaN(parsed.getTime())) return engine.normalize(text);
+        return `${parsed.getUTCFullYear()}-${String(parsed.getUTCMonth() + 1).padStart(2, "0")}-${String(parsed.getUTCDate()).padStart(2, "0")}`;
+      };
+      return canonicalDate(current) === canonicalDate(desired);
+    }
+    if (["experienceYears", "experienceMonths", "currentSalary", "expectedSalary", "availableToJoin"].includes(key)) {
+      const numeric = (value) => String(value ?? "").replace(/[^\d.-]/g, "").replace(/^(-?)0+(?=\d)/, "$1");
+      return numeric(current) === numeric(desired);
+    }
+    if (key === "currentlyWorking") {
+      const truthy = (value) => /^(yes|true|present|current|1|on)$/i.test(String(value || "").trim());
+      return truthy(current) === truthy(desired);
+    }
     if (key === "phone") {
       const leftDigits = String(current).replace(/\D/g, "");
       const rightDigits = String(desired).replace(/\D/g, "");
@@ -202,6 +229,10 @@
   }
 
   function resolveMatch(field, info, profile) {
+    if (site === "keka" && field.name === "mobilePhone.countryCode") {
+      const countryCode = String(profile.phone || "").trim().match(/^\+(\d{1,4})/)?.[0];
+      if (countryCode) return { matched:true, key:"phone", value:countryCode, score:1, reason:"keka-phone-country-code" };
+    }
     if (info.contextKind === "employment" && field.tagName === "SELECT" && ["month", "year"].includes(info.selectKind)) {
       if (info.occurrence > 0 && /^(yes|true|present|current)$/i.test(String(profile.currentlyWorking || "").trim())) {
         return { matched:false, reason:"not-needed-for-current-role" };
@@ -213,6 +244,26 @@
       return { matched:true, key:"currentlyWorking", value:/^(yes|true|present|current)$/i.test(String(profile.currentlyWorking).trim()), score:1, reason:"employment-status" };
     }
     return engine.matchField(info, profile);
+  }
+
+  function clickKekaAddLink(pattern) {
+    const control = [...document.querySelectorAll("button, a, [role='button']")]
+      .find((node) => visible(node) && pattern.test(engine.normalize(textOf(node))));
+    if (!control) return false;
+    control.click();
+    return true;
+  }
+
+  async function expandKekaSections(profile) {
+    if (site !== "keka") return;
+    let expanded = false;
+    if ((profile.companyName || profile.companyRole) && !document.querySelector('[name^="ExperienceDetails["]')) {
+      expanded = clickKekaAddLink(/add experience details/) || expanded;
+    }
+    if ((profile.college || profile.degree || profile.fieldOfStudy) && !document.querySelector('[name^="EducationDetails["]')) {
+      expanded = clickKekaAddLink(/add education details/) || expanded;
+    }
+    if (expanded) await new Promise((resolve) => setTimeout(resolve, 120));
   }
 
   async function scan(forceProfile = false) {
@@ -245,6 +296,7 @@
         return { filled:0, unknown:0, complete:0, connected:false, warning:trusted.warning, version:AGENT_VERSION };
       }
       const profile = trusted.profile || {};
+      await expandKekaSections(profile);
       const scope = activeFormScope();
       const fields = scope ? candidateFields(scope) : [];
       let filled = 0;
@@ -278,6 +330,7 @@
             }
           } else {
             complete++;
+            unknownFields.delete(field);
             details.push({ label, status:"existing", reason:match.matched ? "Matches your saved profile" : "Existing answer left untouched" });
           }
           continue;
@@ -293,6 +346,7 @@
         const changed = applyMatch(field, match);
         if (changed) {
           filled++;
+          unknownFields.delete(field);
           markFilled(field, { label, value:fieldValue(field) || String(match.value), key:match.key });
           details.push({ label, status:"filled", reason:match.reason, key:match.key });
         } else {
@@ -303,6 +357,7 @@
         }
       }
       showAgentHint(filled, unknown, complete, conflicts);
+      if (site === "keka" && filled) setTimeout(() => scheduleAutoFill(0), 350);
       return { filled, replaced, unknown, complete, conflicts, total:fields.length, connected:true, version:AGENT_VERSION, details };
     } finally {
       filling = false;
@@ -318,7 +373,9 @@
     const hint = document.createElement("button");
     hint.id = "applymate-hint";
     hint.type = "button";
-    const summary = filled ? `${filled} filled · ${unknown} need you` : conflicts ? `${conflicts} conflict${conflicts === 1 ? "" : "s"} · click to fix` : unknown ? `${complete} complete · ${unknown} need you` : "Current step is complete";
+    const ready = filled + complete;
+    const needsYou = unknown + conflicts;
+    const summary = needsYou ? `${ready} ready · ${needsYou} need you` : ready ? `${ready} detected fields ready` : "No fillable fields detected";
     hint.innerHTML = `<strong>ApplyMate <small>v${AGENT_VERSION}</small></strong><span>${summary}</span>`;
     hint.addEventListener("click", () => fill(true, true));
     document.documentElement.appendChild(hint);
