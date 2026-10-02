@@ -82,6 +82,7 @@ input:focus,select:focus,textarea:focus { border-color:#3a8a64; box-shadow:0 0 0
 fieldset { border:1px solid var(--line); border-radius:16px; padding:24px; background:#ffffffa8; }
 legend { padding:0 9px; font:600 19px Georgia,serif; }
 .field-grid { display:grid; grid-template-columns:1fr 1fr; gap:16px; }.field-grid .wide { grid-column:1/-1; }
+.fieldset-note { margin:-4px 0 18px; color:var(--muted); font-size:13px; line-height:1.5; }
 .connection-grid,.safety-grid { display:grid; grid-template-columns:1fr 1fr; gap:14px; margin-top:28px; }
 .connection-grid article { position:relative; display:grid; grid-template-columns:45px 1fr; gap:14px; padding:22px; border:1px solid var(--line); border-radius:15px; background:#ffffffa8; }
 .connection-icon { display:grid; place-items:center; width:42px; height:42px; border-radius:12px; color:white; font-weight:900; }.gmail{background:#b84d43}.outlook{background:#3376bd}.linkedin{background:#286da8}.whatsapp{background:#268b58}

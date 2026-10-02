@@ -207,7 +207,7 @@ async function api(req, res, url) {
   if (url.pathname === "/api/profile" && req.method === "PUT") {
     const body = await readJson(req);
     const profile = sanitizeProfile(body.profile);
-    const missingFields = PROFILE_FIELDS.filter((field) => !profile[field]);
+    const missingFields = REQUIRED_PROFILE_FIELDS.filter((field) => !profile[field]);
     if (missingFields.length) return json(res, 400, { error: "Complete all required profile fields before saving.", missingFields });
     if (!["yes", "no"].includes(profile.currentlyWorking)) return json(res, 400, { error: "Choose whether you are currently working." });
     const existingRow = db.prepare("SELECT encrypted_data FROM profiles WHERE user_id = ?").get(user.id);
@@ -370,7 +370,8 @@ async function readBuffer(req, maxBytes) {
   return Buffer.concat(chunks);
 }
 
-const PROFILE_FIELDS = ["firstName","lastName","fullName","email","phone","city","state","country","postalCode","college","collegeAddress","collegeCity","collegeState","collegeCountry","degree","fieldOfStudy","graduationYear","gpa","tenthPercentage","twelfthPercentage","companyName","companyRole","currentlyWorking","employmentDuration","skills","linkedin","github","portfolio"];
+const PROFILE_FIELDS = ["firstName","middleName","lastName","fullName","email","phone","city","state","country","postalCode","dateOfBirth","gender","experienceYears","experienceMonths","currentSalary","expectedSalary","availableToJoin","preferredLocation","college","collegeAddress","collegeCity","collegeState","collegeCountry","degree","fieldOfStudy","graduationYear","gpa","tenthPercentage","twelfthPercentage","companyName","companyRole","currentlyWorking","employmentDuration","employmentStartDate","employmentEndDate","workLocation","experienceDescription","skills","linkedin","github","portfolio"];
+const REQUIRED_PROFILE_FIELDS = ["firstName","lastName","fullName","email","phone","city","state","country","postalCode","college","collegeAddress","collegeCity","collegeState","collegeCountry","degree","fieldOfStudy","graduationYear","gpa","tenthPercentage","twelfthPercentage","companyName","companyRole","currentlyWorking","employmentDuration","skills","linkedin","github","portfolio"];
 
 function sanitizeProfile(value) {
   if (!value || typeof value !== "object" || Array.isArray(value)) return {};

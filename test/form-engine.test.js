@@ -11,10 +11,20 @@ const engine = context.ApplyMateEngine;
 const profile = {
   firstName:"Pragya",
   city:"Bilaspur",
+  gender:"female",
+  currentSalary:"0",
+  expectedSalary:"600000",
+  availableToJoin:"15",
+  preferredLocation:"Bengaluru",
+  experienceYears:"0",
+  experienceMonths:"6",
   companyName:"Example Technologies",
   companyRole:"Developer",
   currentlyWorking:"yes",
-  employmentDuration:"May 2025 - Present"
+  employmentDuration:"May 2025 - Present",
+  employmentStartDate:"2025-05-12",
+  workLocation:"Bengaluru",
+  experienceDescription:"Built and tested product features."
 };
 
 test("LinkedIn employment title and company use saved experience", () => {
@@ -41,6 +51,20 @@ test("Keka experience fields map to the trusted employment profile", () => {
 test("Keka current location maps to personal city outside experience", () => {
   const location = engine.matchField({ site:"keka", label:"Current Location", contextKind:"general" }, profile);
   assert.equal(location.key, "city");
+});
+
+test("Keka application defaults map to explicitly saved profile answers", () => {
+  assert.equal(engine.matchField({ site:"keka", label:"Current Salary", contextKind:"general" }, profile).key, "currentSalary");
+  assert.equal(engine.matchField({ site:"keka", label:"Expected Salary", contextKind:"general" }, profile).key, "expectedSalary");
+  assert.equal(engine.matchField({ site:"keka", label:"Available To Join", contextKind:"general" }, profile).key, "availableToJoin");
+  assert.equal(engine.matchField({ site:"keka", label:"Preferred Location", contextKind:"general" }, profile).key, "preferredLocation");
+  assert.equal(engine.matchField({ site:"keka", label:"Gender", contextKind:"general" }, profile).key, "gender");
+});
+
+test("structured employment details stay inside employment context", () => {
+  assert.equal(engine.matchField({ site:"keka", label:"Date of Joining", contextKind:"employment" }, profile).key, "employmentStartDate");
+  assert.equal(engine.matchField({ site:"keka", label:"Work Location", contextKind:"employment" }, profile).key, "workLocation");
+  assert.equal(engine.matchField({ site:"generic", label:"Location", contextKind:"general" }, profile).matched, false);
 });
 
 test("employment duration is parsed into LinkedIn month and year selects", () => {

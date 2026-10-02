@@ -1,12 +1,13 @@
 (() => {
-  const AGENT_VERSION = "0.3.1";
+  const AGENT_VERSION = "0.4.0";
   if (window.__applyMateVersion === AGENT_VERSION) return;
   window.__applyMateVersion = AGENT_VERSION;
 
   const engine = globalThis.ApplyMateEngine;
   if (!engine) return;
 
-  const sensitive = /password|passcode|otp|one.?time|captcha|verification|credit|debit|card number|cvv|bank|aadhaar|aadhar|pan number|social security|signature|gender|race|ethnic|disability|veteran|religion|consent|terms|agree/i;
+  const alwaysProtected = /password|passcode|otp|one.?time|captcha|verification|credit|debit|card number|cvv|bank|aadhaar|aadhar|pan number|social security|signature|consent|terms|agree/i;
+  const manuallyApprovedOnly = /gender|race|ethnic|disability|veteran|religion/i;
   const site = /(^|\.)linkedin\.com$/i.test(location.hostname) ? "linkedin" : /(^|\.)keka\.com$/i.test(location.hostname) ? "keka" : "generic";
   let cachedSettings = { autoFill:true, requireCaptchaConfirmation:true, blockAutomaticSubmit:true, confidenceThreshold:.72 };
   let profileCache = null;
@@ -45,8 +46,11 @@
         [/^companyName_\d+$/i, "Company Name"], [/^designation_\d+$/i, "Job Title"],
         [/^isCurrentlyWorking_\d+$/i, "Currently working here"], [/^experienceLocation_\d+$/i, "Work Location"],
         [/^experienceDateOfJoining_\d+$/i, "Date of Joining"], [/^dateOfRelieving_\d+$/i, "Date of Relieving"],
-        [/^skills$/i, "Skills"], [/^currentSalary$/i, "Current Salary"], [/^expectedSalary$/i, "Expected Salary"],
-        [/^availability$/i, "Available To Join"], [/^locationPreference$/i, "Preferred Location"]
+        [/^skills$/i, "Skills"], [/^gender$/i, "Gender"], [/^(dateOfBirth|dob)$/i, "Date of Birth"],
+        [/^currentSalary$/i, "Current Salary"], [/^expectedSalary$/i, "Expected Salary"],
+        [/^availability$/i, "Available To Join"], [/^locationPreference$/i, "Preferred Location"],
+        [/^(workExperience\.)?years$/i, "Total Experience Years"], [/^(workExperience\.)?months$/i, "Total Experience Months"],
+        [/^workExperienceYears$/i, "Total Experience Years"], [/^workExperienceMonths$/i, "Total Experience Months"]
       ].find(([pattern]) => pattern.test(id));
       if (mapped) add(mapped[1]);
     }
@@ -171,6 +175,13 @@
   }
 
   function applyMatch(field, match) {
+    if (["employmentStartDate", "employmentEndDate", "dateOfBirth"].includes(match.key)) {
+      const iso = String(match.value || "").match(/^\d{4}-\d{2}-\d{2}$/)?.[0];
+      if (iso && field.type !== "date") {
+        const [year, month, day] = iso.split("-").map(Number);
+        match = { ...match, value:new Intl.DateTimeFormat("en-GB", { day:"2-digit", month:"long", year:"numeric", timeZone:"UTC" }).format(new Date(Date.UTC(year, month - 1, day))) };
+      }
+    }
     if (field.tagName === "SELECT") return setSelectValue(field, match.value);
     if (["checkbox", "radio"].includes(field.type)) return setBooleanValue(field, match.value);
     return setTextValue(field, match.value);
@@ -247,7 +258,8 @@
       for (const field of fields) {
         const info = descriptor(field, scope, fields);
         const label = info.label || "Unlabelled field";
-        if (sensitive.test(`${info.label} ${info.hints}`)) {
+        const fieldIdentity = `${info.label} ${info.hints}`;
+        if (alwaysProtected.test(fieldIdentity) || (manuallyApprovedOnly.test(fieldIdentity) && !replaceConflicts)) {
           details.push({ label, status:"protected", reason:"Sensitive or human-verification field" });
           continue;
         }
@@ -328,7 +340,7 @@
     for (const [field, original] of unknownFields) {
       if (!document.contains(field)) continue;
       const value = fieldValue(field);
-      if (!value || value === original.initialValue || sensitive.test(original.label)) continue;
+      if (!value || value === original.initialValue || alwaysProtected.test(original.label) || manuallyApprovedOnly.test(original.label)) continue;
       const key = engine.normalize(original.label).slice(0, 180);
       if (key) deduped.set(key, { label:original.label.slice(0, 180), value:value.slice(0, 1000) });
     }
@@ -392,7 +404,7 @@
     const value = fieldValue(event.target);
     event.target.classList.toggle("applymate-needs-input", !value);
     const key = engine.normalize(original.label).slice(0, 180);
-    if (key && value && !sensitive.test(original.label)) learnedAnswerBuffer.set(key, { label:original.label.slice(0, 180), value:value.slice(0, 1000) });
+    if (key && value && !alwaysProtected.test(original.label) && !manuallyApprovedOnly.test(original.label)) learnedAnswerBuffer.set(key, { label:original.label.slice(0, 180), value:value.slice(0, 1000) });
     else if (key) learnedAnswerBuffer.delete(key);
   }
 

@@ -66,7 +66,7 @@
 
         <section id="profileView" class="view" hidden>
           <header class="page-header"><div><p class="kicker">SAVED DETAILS</p><h1>Your profile</h1><p class="header-note">These details are used only when you ask ApplyMate to fill a form.</p></div></header>
-          <p class="page-intro"><span class="required-star" aria-hidden="true">*</span> All profile details are required. Blank fields are never guessed, and you will confirm everything before it is saved.</p>
+          <p class="page-intro"><span class="required-star" aria-hidden="true">*</span> Required profile details must be completed. Add the optional application defaults too for better autofill coverage. Blank fields are never guessed.</p>
           <section class="resume-import" id="resumeImport">
             <div class="resume-copy"><span class="resume-symbol">↥</span><div><h2>Fill from your CV</h2><p>Upload a PDF, DOCX, or TXT resume. ApplyMate will suggest details for empty fields and let you review them before saving.</p></div></div>
             <label class="resume-drop" id="resumeDrop" for="resumeFileInput">
@@ -78,9 +78,15 @@
           </section>
           <form id="profileForm" class="profile-form">
             <fieldset><legend>Identity and contact</legend><div class="field-grid">
-              <label>First name <span class="required-star" aria-hidden="true">*</span><input name="firstName" autocomplete="given-name" required /></label><label>Last name <span class="required-star" aria-hidden="true">*</span><input name="lastName" autocomplete="family-name" required /></label>
+              <label>First name <span class="required-star" aria-hidden="true">*</span><input name="firstName" autocomplete="given-name" required /></label><label>Middle name<input name="middleName" autocomplete="additional-name" /></label><label>Last name <span class="required-star" aria-hidden="true">*</span><input name="lastName" autocomplete="family-name" required /></label>
               <label class="wide">Full name <span class="required-star" aria-hidden="true">*</span><input name="fullName" autocomplete="name" required /></label><label>Email <span class="required-star" aria-hidden="true">*</span><input name="email" type="email" autocomplete="email" required /></label><label>Phone <span class="required-star" aria-hidden="true">*</span><input name="phone" autocomplete="tel" required /></label>
               <label>City <span class="required-star" aria-hidden="true">*</span><input name="city" required /></label><label>State <span class="required-star" aria-hidden="true">*</span><input name="state" required /></label><label>Country <span class="required-star" aria-hidden="true">*</span><input name="country" required /></label><label>Postal code <span class="required-star" aria-hidden="true">*</span><input name="postalCode" required /></label>
+            </div></fieldset>
+            <fieldset><legend>Application defaults</legend><p class="fieldset-note">Optional, but these answers appear often on application forms. ApplyMate uses them only when you choose “Use my saved profile.”</p><div class="field-grid">
+              <label>Date of birth<input name="dateOfBirth" type="date" /></label><label>Gender<select name="gender"><option value="">Prefer not to save</option><option value="female">Female</option><option value="male">Male</option><option value="non-binary">Non-binary</option><option value="prefer not to say">Prefer not to say</option></select></label>
+              <label>Total experience — years<input name="experienceYears" type="number" min="0" max="60" inputmode="numeric" /></label><label>Total experience — months<input name="experienceMonths" type="number" min="0" max="11" inputmode="numeric" /></label>
+              <label>Current salary (annual INR)<input name="currentSalary" inputmode="numeric" placeholder="Example: 0 for a fresher" /></label><label>Expected salary (annual INR)<input name="expectedSalary" inputmode="numeric" /></label>
+              <label>Available to join (days)<input name="availableToJoin" type="number" min="0" max="365" inputmode="numeric" /></label><label>Preferred work location<input name="preferredLocation" placeholder="Example: Bengaluru" /></label>
             </div></fieldset>
             <fieldset><legend>Education</legend><div class="field-grid">
               <label class="wide">College or university <span class="required-star" aria-hidden="true">*</span><input name="college" required /></label><label class="wide">College address <span class="required-star" aria-hidden="true">*</span><input name="collegeAddress" autocomplete="street-address" required /></label>
@@ -91,6 +97,8 @@
             <fieldset><legend>Experience</legend><div class="field-grid">
               <label>Company name <span class="required-star" aria-hidden="true">*</span><input name="companyName" required /></label><label>Company role <span class="required-star" aria-hidden="true">*</span><input name="companyRole" required /></label>
               <label>Currently working? <span class="required-star" aria-hidden="true">*</span><select name="currentlyWorking" required><option value="">Select an option</option><option value="yes">Yes</option><option value="no">No</option></select></label><label>Duration <span class="required-star" aria-hidden="true">*</span><input name="employmentDuration" placeholder="Example: June 2024 – Present" required /></label>
+              <label>Joining date<input name="employmentStartDate" type="date" /></label><label>Relieving date<input name="employmentEndDate" type="date" /></label>
+              <label>Work location<input name="workLocation" placeholder="Example: Bengaluru" /></label><label class="wide">Experience description<textarea name="experienceDescription" rows="3" placeholder="A short description of your responsibilities and achievements"></textarea></label>
             </div></fieldset>
             <fieldset><legend>Skills and links</legend><div class="field-grid">
               <label class="wide">Skills <span class="required-star" aria-hidden="true">*</span><input name="skills" required /></label><label class="wide">LinkedIn URL <span class="required-star" aria-hidden="true">*</span><input name="linkedin" type="url" required /></label><label class="wide">GitHub URL <span class="required-star" aria-hidden="true">*</span><input name="github" type="url" required /></label><label class="wide">Portfolio URL <span class="required-star" aria-hidden="true">*</span><input name="portfolio" type="url" required /></label>

@@ -1,8 +1,9 @@
 ((root) => {
   const MONTHS = ["january", "february", "march", "april", "may", "june", "july", "august", "september", "october", "november", "december"];
-  const SENSITIVE = /password|passcode|otp|one.?time|captcha|verification|credit|debit|card number|cvv|bank|aadhaar|aadhar|pan number|social security|signature|gender|race|ethnic|disability|veteran|religion|consent|terms|agree/i;
+  const SENSITIVE = /password|passcode|otp|one.?time|captcha|verification|credit|debit|card number|cvv|bank|aadhaar|aadhar|pan number|social security|signature|race|ethnic|disability|veteran|religion|consent|terms|agree/i;
   const RULES = [
     ["firstName", ["first name", "given name", "forename"]],
+    ["middleName", ["middle name", "additional name"]],
     ["lastName", ["last name", "family name", "surname"]],
     ["fullName", ["full name", "candidate name", "applicant name", "your name"]],
     ["email", ["email address", "e mail", "email"]],
@@ -11,6 +12,14 @@
     ["state", ["current state", "state of residence", "state", "province", "region"]],
     ["country", ["country of residence", "current country", "country"]],
     ["postalCode", ["postal code", "zip code", "pincode", "pin code"]],
+    ["dateOfBirth", ["date of birth", "birth date", "dob"]],
+    ["gender", ["gender"]],
+    ["experienceYears", ["total experience years", "experience years", "years of experience"]],
+    ["experienceMonths", ["total experience months", "experience months", "months of experience"]],
+    ["currentSalary", ["current annual compensation", "current ctc", "current salary"]],
+    ["expectedSalary", ["expected annual compensation", "expected ctc", "expected salary"]],
+    ["availableToJoin", ["available to join in days", "availability in days", "notice period in days", "available to join", "availability"]],
+    ["preferredLocation", ["preferred work location", "location preference", "preferred location"]],
     ["college", ["college name", "university name", "institute name", "college", "university", "institution"]],
     ["collegeAddress", ["college address", "university address", "institute address", "campus address"]],
     ["collegeCity", ["college city", "university city", "institute city", "campus city"]],
@@ -24,12 +33,16 @@
     ["twelfthPercentage", ["12th percentage", "class 12 percentage", "higher secondary percentage"]],
     ["companyName", ["current company", "current employer", "employer name", "company name", "company"]],
     ["companyRole", ["current job title", "current role", "job title", "company role", "designation", "your title"]],
+    ["employmentStartDate", ["date of joining", "joining date", "employment start date", "start date"]],
+    ["employmentEndDate", ["date of relieving", "relieving date", "employment end date", "end date"]],
+    ["workLocation", ["work location", "experience location", "employment location"]],
+    ["experienceDescription", ["experience description", "work description", "role description"]],
     ["skills", ["technical skills", "key skills", "skills"]],
     ["linkedin", ["linkedin profile url", "linkedin profile", "linkedin url", "linkedin"]],
     ["github", ["github profile url", "github profile", "github url", "github"]],
     ["portfolio", ["portfolio website", "personal website", "portfolio url", "portfolio"]]
   ];
-  const EMPLOYMENT_KEYS = new Set(["companyName", "companyRole"]);
+  const EMPLOYMENT_KEYS = new Set(["companyName", "companyRole", "employmentStartDate", "employmentEndDate", "workLocation", "experienceDescription"]);
   const LOCATION_KEYS = new Set(["city", "state", "country", "postalCode"]);
 
   function normalize(value = "") {
