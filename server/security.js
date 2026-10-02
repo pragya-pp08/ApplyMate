@@ -7,9 +7,7 @@ export function normalizeEmail(email) {
 }
 
 export function validatePassword(password) {
-  if (typeof password !== "string" || password.length < 10) {
-    return "Use at least 10 characters for your password.";
-  }
+  if (typeof password !== "string" || password.length === 0) return "Enter a password.";
   if (password.length > 256) return "Password is too long.";
   return null;
 }

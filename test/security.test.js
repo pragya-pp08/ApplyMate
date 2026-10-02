@@ -23,7 +23,8 @@ test("encrypted profiles round-trip and reject the wrong key", () => {
 
 test("identity helpers normalize and validate input", () => {
   assert.equal(normalizeEmail("  PERSON@Example.COM "), "person@example.com");
-  assert.match(validatePassword("short"), /10 characters/);
+  assert.equal(validatePassword("x"), null);
+  assert.match(validatePassword(""), /Enter a password/);
   assert.equal(validatePassword("long-enough-password"), null);
   assert.equal(tokenHash("abc"), tokenHash("abc"));
   assert.notEqual(tokenHash("abc"), tokenHash("abd"));
