@@ -1,6 +1,7 @@
 const state = { user: null, applications: [], filter: "all", register: false };
 const $ = (selector) => document.querySelector(selector);
 const $$ = (selector) => [...document.querySelectorAll(selector)];
+const resetToken = new URLSearchParams(location.search).get("reset") || "";
 
 async function api(path, options = {}) {
   const response = await fetch(path, { ...options, headers: { "Content-Type": "application/json", ...(options.headers || {}) } });
@@ -10,6 +11,12 @@ async function api(path, options = {}) {
 }
 
 async function bootstrap() {
+  if (resetToken) {
+    $("#authView").hidden = false;
+    $("#appView").hidden = true;
+    showResetPassword();
+    return;
+  }
   try {
     const { user } = await api("/api/auth/me");
     enterApp(user);
@@ -30,6 +37,36 @@ function enterApp(user) {
   $("#avatar").textContent = user.name.slice(0, 1).toUpperCase();
 }
 
+function showSignIn() {
+  state.register = false;
+  $("#authForm").hidden = false;
+  $("#forgotPasswordForm").hidden = true;
+  $("#resetPasswordForm").hidden = true;
+  $("#forgotPasswordButton").hidden = false;
+  $("#authToggle").hidden = false;
+  $("#resetLinkBox").hidden = true;
+  $("#nameField").hidden = true;
+  $("#nameField input").required = false;
+  $("#authForm input[name='password']").autocomplete = "current-password";
+  $("#authTitle").textContent = "Welcome back";
+  $("#authSubtitle").textContent = "Sign in to continue.";
+  $("#authForm button").textContent = "Sign in";
+  $("#authToggle").textContent = "New here? Create an account";
+  $("#authError").textContent = "";
+}
+
+function showResetPassword() {
+  $("#authForm").hidden = true;
+  $("#forgotPasswordForm").hidden = true;
+  $("#resetPasswordForm").hidden = false;
+  $("#forgotPasswordButton").hidden = true;
+  $("#authToggle").hidden = true;
+  $("#resetLinkBox").hidden = true;
+  $("#authTitle").textContent = "Choose a new password";
+  $("#authSubtitle").textContent = "Enter any non-empty password for your account.";
+  $("#authError").textContent = "";
+}
+
 $("#authToggle").addEventListener("click", () => {
   state.register = !state.register;
   $("#nameField").hidden = !state.register;
@@ -39,7 +76,54 @@ $("#authToggle").addEventListener("click", () => {
   $("#authSubtitle").textContent = state.register ? "Start saving your applications." : "Sign in to continue.";
   $("#authForm button").textContent = state.register ? "Create account" : "Sign in";
   $("#authToggle").textContent = state.register ? "Already have an account? Sign in" : "New here? Create an account";
+  $("#forgotPasswordButton").hidden = state.register;
   $("#authError").textContent = "";
+});
+
+$("#forgotPasswordButton").addEventListener("click", () => {
+  $("#authForm").hidden = true;
+  $("#forgotPasswordForm").hidden = false;
+  $("#forgotPasswordButton").hidden = true;
+  $("#authToggle").hidden = true;
+  $("#resetLinkBox").hidden = true;
+  $("#authTitle").textContent = "Reset your password";
+  $("#authSubtitle").textContent = "Enter the email used for your ApplyMate account.";
+  $("#authError").textContent = "";
+});
+
+$$('.backToSignIn').forEach((button) => button.addEventListener("click", () => {
+  history.replaceState(null, "", "/");
+  showSignIn();
+}));
+
+$("#forgotPasswordForm").addEventListener("submit", async (event) => {
+  event.preventDefault();
+  $("#authError").textContent = "";
+  $("#resetLinkBox").hidden = true;
+  try {
+    const values = Object.fromEntries(new FormData(event.currentTarget));
+    const result = await api("/api/auth/forgot-password", { method:"POST", body:JSON.stringify(values) });
+    $("#authError").textContent = result.message;
+    if (result.resetUrl) {
+      $("#resetLink").href = result.resetUrl;
+      $("#resetLinkBox").hidden = false;
+    }
+  } catch (error) { $("#authError").textContent = error.message; }
+});
+
+$("#resetPasswordForm").addEventListener("submit", async (event) => {
+  event.preventDefault();
+  const values = Object.fromEntries(new FormData(event.currentTarget));
+  if (values.password !== values.confirmPassword) {
+    $("#authError").textContent = "Passwords do not match.";
+    return;
+  }
+  try {
+    await api("/api/auth/reset-password", { method:"POST", body:JSON.stringify({ token:resetToken, password:values.password }) });
+    history.replaceState(null, "", "/");
+    showSignIn();
+    $("#authError").textContent = "Password reset. Sign in with your new password.";
+  } catch (error) { $("#authError").textContent = error.message; }
 });
 
 $("#authForm").addEventListener("submit", async (event) => {

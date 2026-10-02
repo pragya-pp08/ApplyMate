@@ -91,6 +91,46 @@ async function api(req, res, url) {
     return createSession(res, user.id, { id: user.id, name: user.name, email: user.email });
   }
 
+  if (url.pathname === "/api/auth/forgot-password" && req.method === "POST") {
+    const email = normalizeEmail((await readJson(req)).email);
+    const attemptKey = `${req.socket.remoteAddress || "unknown"}:reset:${email}`;
+    if (isRateLimited(attemptKey)) return json(res, 429, { error: "Too many reset requests. Try again in 15 minutes." });
+    recordLoginFailure(attemptKey);
+    db.prepare("DELETE FROM password_reset_tokens WHERE expires_at <= ?").run(new Date().toISOString());
+    const user = /^\S+@\S+\.\S+$/.test(email) ? db.prepare("SELECT id FROM users WHERE email = ?").get(email) : null;
+    let resetUrl;
+    if (user) {
+      const token = newToken(32);
+      const expiresAt = new Date(Date.now() + 15 * 60 * 1000).toISOString();
+      db.prepare("DELETE FROM password_reset_tokens WHERE user_id = ?").run(user.id);
+      db.prepare("INSERT INTO password_reset_tokens (token_hash, user_id, expires_at) VALUES (?, ?, ?)").run(tokenHash(token), user.id, expiresAt);
+      const destination = new URL("/", appOrigin);
+      destination.searchParams.set("reset", token);
+      resetUrl = destination.toString();
+      audit(user.id, "password.reset_requested", "Password reset requested");
+    }
+    return json(res, 200, {
+      ok: true,
+      message: "If that email belongs to an account, a reset link is ready.",
+      ...(!isProduction && resetUrl ? { resetUrl } : {})
+    });
+  }
+
+  if (url.pathname === "/api/auth/reset-password" && req.method === "POST") {
+    const body = await readJson(req);
+    const token = String(body.token || "");
+    const passwordError = validatePassword(body.password);
+    if (!token || passwordError) return json(res, 400, { error: passwordError || "Reset link is invalid or expired." });
+    const reset = db.prepare("SELECT user_id FROM password_reset_tokens WHERE token_hash = ? AND expires_at > ?").get(tokenHash(token), new Date().toISOString());
+    if (!reset) return json(res, 400, { error: "Reset link is invalid or expired." });
+    const passwordHash = await hashPassword(body.password);
+    db.prepare("UPDATE users SET password_hash = ? WHERE id = ?").run(passwordHash, reset.user_id);
+    db.prepare("DELETE FROM password_reset_tokens WHERE user_id = ?").run(reset.user_id);
+    db.prepare("DELETE FROM sessions WHERE user_id = ?").run(reset.user_id);
+    audit(reset.user_id, "password.reset_completed", "Password reset completed; existing sessions revoked");
+    return json(res, 200, { ok: true });
+  }
+
   if (url.pathname === "/api/auth/logout" && req.method === "POST") {
     const token = parseCookies(req.headers.cookie).applymate_session;
     if (token) db.prepare("DELETE FROM sessions WHERE token_hash = ?").run(tokenHash(token));

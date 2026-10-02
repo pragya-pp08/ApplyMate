@@ -32,6 +32,7 @@ input:focus,select:focus,textarea:focus { border-color:#3a8a64; box-shadow:0 0 0
 .button.primary:hover { background:var(--green-dark); }
 .button.secondary { color:#345143; background:#fff; border-color:#ccd4cd; }
 .auth-card .button { margin-top:4px; padding:13px; }
+.auth-secondary-action{padding:9px 12px 3px;text-align:right}.reset-link-box{margin:14px 0;padding:14px;border:1px solid #bbf7d0;border-radius:11px;background:#f0fdf4}.reset-link-box strong{display:block;font-size:13px}.reset-link-box p{margin:5px 0 11px!important;font-size:11px!important}.reset-link-box a{display:block;text-align:center;text-decoration:none}.backToSignIn{margin-top:0}
 .text-button { width:100%; border:0; padding:12px; color:var(--green); background:transparent; font-weight:750; }
 .error { min-height:18px; color:#a13b34; font-size:11px; }
 .app-shell { min-height:100vh; display:grid; grid-template-columns:245px minmax(0,1fr); }

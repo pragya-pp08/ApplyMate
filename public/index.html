@@ -30,7 +30,20 @@
             <label>Password<input name="password" type="password" autocomplete="current-password" required /></label>
             <button class="button primary" type="submit">Sign in</button>
           </form>
+          <button id="forgotPasswordButton" class="text-button auth-secondary-action" type="button">Forgot password?</button>
+          <form id="forgotPasswordForm" hidden>
+            <label>Account email<input name="email" type="email" autocomplete="email" required /></label>
+            <button class="button primary" type="submit">Create reset link</button>
+            <button class="text-button backToSignIn" type="button">← Back to sign in</button>
+          </form>
+          <form id="resetPasswordForm" hidden>
+            <label>New password<input name="password" type="password" autocomplete="new-password" required /></label>
+            <label>Confirm new password<input name="confirmPassword" type="password" autocomplete="new-password" required /></label>
+            <button class="button primary" type="submit">Reset password</button>
+            <button class="text-button backToSignIn" type="button">← Back to sign in</button>
+          </form>
           <p id="authError" class="error" role="alert"></p>
+          <div id="resetLinkBox" class="reset-link-box" hidden><strong>Local reset link created</strong><p>This one-time link expires in 15 minutes.</p><a id="resetLink" class="button secondary" href="#">Continue to reset password</a></div>
           <button id="authToggle" class="text-button">New here? Create an account</button>
           <p class="auth-legal"><a href="/privacy.html">Privacy</a><span>·</span><a href="/terms.html">Terms</a></p>
         </div>
