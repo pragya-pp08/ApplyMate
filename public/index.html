@@ -126,6 +126,18 @@
           </form>
         </section>
 
+        <section id="profileSavedView" class="view profile-saved-view" hidden>
+          <div class="profile-saved-panel" role="status" aria-live="polite">
+            <div class="profile-saved-check" aria-hidden="true"><span>✓</span></div>
+            <p class="kicker">SAVE COMPLETE</p>
+            <h1>Your profile is updated.</h1>
+            <p class="profile-saved-copy">Your details were saved securely and are ready for ApplyMate autofill.</p>
+            <div class="profile-saved-proof"><span class="pulse"></span><strong id="savedProfileCount">Profile verified</strong><small>Saved to your encrypted ApplyMate profile</small></div>
+            <div class="profile-saved-actions"><button id="savedBackToInbox" class="button primary" type="button">Go to form inbox</button><button id="savedEditProfile" class="button secondary" type="button">Review or edit profile</button></div>
+            <p class="profile-saved-note">Nothing was submitted to any employer.</p>
+          </div>
+        </section>
+
         <section id="connectionsView" class="view" hidden>
           <header class="page-header"><div><p class="kicker">SETUP</p><h1>Connections</h1><p class="header-note">Choose where ApplyMate can receive application links.</p></div></header>
           <div class="connection-grid">

@@ -153,7 +153,7 @@ function showView(name) {
   const activeView = $(`#${name}View`);
   activeView.classList.remove("view-enter");
   requestAnimationFrame(() => activeView.classList.add("view-enter"));
-  $$(".nav-item").forEach((button) => button.classList.toggle("active", button.dataset.view === name));
+  $$(".nav-item").forEach((button) => button.classList.toggle("active", button.dataset.view === name || (name === "profileSaved" && button.dataset.view === "profile")));
   history.replaceState(null, "", `#${name}`);
   if (name === "connections") loadIntegrations();
   if (name === "safety") loadAudit();
@@ -231,6 +231,8 @@ saveButton.addEventListener("click", () => {
   hideProfileSaveCard();
 });
 $("#backToInboxButton").addEventListener("click", () => { showView("inbox"); window.scrollTo({ top:0, behavior:"smooth" }); });
+$("#savedBackToInbox").addEventListener("click", () => { showView("inbox"); window.scrollTo({ top:0, behavior:"smooth" }); });
+$("#savedEditProfile").addEventListener("click", () => { hideProfileSaveCard(); showView("profile"); window.scrollTo({ top:0, behavior:"smooth" }); });
 profileForm.addEventListener("invalid", (event) => {
   event.preventDefault();
   const message = $("#profileFormMessage");
@@ -257,10 +259,13 @@ $("#confirmProfileSave").addEventListener("click", async () => {
   try {
     await api("/api/profile", { method:"PUT", body:JSON.stringify({ profile:pendingProfile }) });
     await loadProfile();
-    showView("profile");
+    const savedCount = Object.values(pendingProfile).filter((value) => String(value || "").trim()).length;
+    $("#savedProfileCount").textContent = `${savedCount} profile detail${savedCount === 1 ? "" : "s"} saved and verified`;
     pendingProfile = null;
     message.textContent = "";
-    showProfileSaveCard("success");
+    hideProfileSaveCard();
+    showView("profileSaved");
+    window.scrollTo({ top:0, behavior:"smooth" });
   } catch (error) {
     message.textContent = error.message;
     message.classList.add("error");
@@ -439,7 +444,7 @@ $("#deleteAccountButton").addEventListener("click", async () => {
 
 function toast(message) { const node = $("#toast"); node.textContent = message; node.classList.add("show"); setTimeout(() => node.classList.remove("show"), 2400); }
 
-const initialView = ["inbox","profile","connections","safety"].includes(location.hash.slice(1)) ? location.hash.slice(1) : "inbox";
+const initialView = ["inbox","profile","profileSaved","connections","safety"].includes(location.hash.slice(1)) ? location.hash.slice(1) : "inbox";
 bootstrap().then(() => {
   const googleResult = new URLSearchParams(location.search).get("google");
   if (googleResult === "connected") toast("Gmail connected securely.");
